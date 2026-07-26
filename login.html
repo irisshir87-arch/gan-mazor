@@ -13,10 +13,73 @@
     <form id="loginForm"><label>כתובת מייל<input id="email" type="email" autocomplete="email" required placeholder="name@example.com"></label><button class="primary-button" type="submit">שליחת קישור כניסה</button></form>
     <a class="demo-link" href="index.html">כניסה למצב הדמו</a><div id="message" class="message"></div>
   </main>
-  <script src="config.js?v=20260726-1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const form=document.getElementById('loginForm'),message=document.getElementById('message');
-    form.addEventListener('submit',async e=>{e.preventDefault();const c=window.GAN_MAZOR_CONFIG||{};if(!c.SUPABASE_URL||!c.SUPABASE_ANON_KEY){message.textContent='Supabase עדיין לא מחובר. אפשר להיכנס למצב הדמו.';return}try{const client=window.supabase.createClient(c.SUPABASE_URL,c.SUPABASE_ANON_KEY);const {error}=await client.auth.signInWithOtp({email:document.getElementById('email').value,options:{emailRedirectTo:location.href.replace('login.html','index.html')}});if(error)throw error;message.textContent='הקישור נשלח. בדקו את תיבת המייל.'}catch(err){message.textContent=err.message||'לא ניתן לשלוח כרגע.'}});
+    // טוען תמיד את הגדרות Supabase מהגרסה העדכנית ביותר.
+    document.write('<script src="config.js?v=' + Date.now() + '"><\\/script>');
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const form = document.getElementById('loginForm');
+    const message = document.getElementById('message');
+    const button = form.querySelector('button[type="submit"]');
+
+    function getConfig() {
+      return window.GAN_MAZOR_CONFIG || {};
+    }
+
+    function connectionIsReady() {
+      const config = getConfig();
+      return Boolean(
+        config.SUPABASE_URL &&
+        config.SUPABASE_ANON_KEY &&
+        config.SUPABASE_URL.endsWith('.supabase.co') &&
+        config.SUPABASE_ANON_KEY.startsWith('sb_publishable_')
+      );
+    }
+
+    if (connectionIsReady()) {
+      message.textContent = 'החיבור מוכן. אפשר לשלוח קישור כניסה.';
+    } else {
+      message.textContent = 'הגדרות החיבור עדיין לא נטענו. רעננו את העמוד.';
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      if (!connectionIsReady()) {
+        message.textContent = 'הגדרות החיבור עדיין לא נטענו. רעננו את העמוד.';
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = 'שולחת...';
+      message.textContent = '';
+
+      try {
+        const config = getConfig();
+        const client = window.supabase.createClient(
+          config.SUPABASE_URL,
+          config.SUPABASE_ANON_KEY
+        );
+
+        const redirectUrl = new URL('index.html', window.location.href).href;
+        redirectUrl.search = '';
+
+        const { error } = await client.auth.signInWithOtp({
+          email: document.getElementById('email').value.trim(),
+          options: { emailRedirectTo: redirectUrl.toString() }
+        });
+
+        if (error) throw error;
+        message.textContent = 'הקישור נשלח. בדקו גם בתיקיית הספאם.';
+      } catch (error) {
+        console.error(error);
+        message.textContent = error?.message || 'לא ניתן לשלוח כרגע.';
+      } finally {
+        button.disabled = false;
+        button.textContent = 'שליחת קישור כניסה';
+      }
+    });
   </script>
 </body>
 </html>

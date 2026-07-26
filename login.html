@@ -13,7 +13,7 @@
     <form id="loginForm"><label>כתובת מייל<input id="email" type="email" autocomplete="email" required placeholder="name@example.com"></label><button class="primary-button" type="submit">שליחת קישור כניסה</button></form>
     <a class="demo-link" href="index.html">כניסה למצב הדמו</a><div id="message" class="message"></div>
   </main>
-  <script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js?v=20260726-1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const form=document.getElementById('loginForm'),message=document.getElementById('message');
     form.addEventListener('submit',async e=>{e.preventDefault();const c=window.GAN_MAZOR_CONFIG||{};if(!c.SUPABASE_URL||!c.SUPABASE_ANON_KEY){message.textContent='Supabase עדיין לא מחובר. אפשר להיכנס למצב הדמו.';return}try{const client=window.supabase.createClient(c.SUPABASE_URL,c.SUPABASE_ANON_KEY);const {error}=await client.auth.signInWithOtp({email:document.getElementById('email').value,options:{emailRedirectTo:location.href.replace('login.html','index.html')}});if(error)throw error;message.textContent='הקישור נשלח. בדקו את תיבת המייל.'}catch(err){message.textContent=err.message||'לא ניתן לשלוח כרגע.'}});

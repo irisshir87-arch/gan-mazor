@@ -1,11 +1,10 @@
-const CACHE = "gan-mazor-v2-20260725";
+const CACHE = "gan-mazor-v2-20260726-1";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./state.js",
-  "./config.js",
   "./admin.html",
   "./admin.css",
   "./admin.js",
@@ -27,10 +26,55 @@ const ASSETS = [
   "./assets/album-7.svg",
   "./assets/album-8.svg"
 ];
-self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS))));
-self.addEventListener("activate", event => event.waitUntil(
-  caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))
-));
-self.addEventListener("fetch", event => event.respondWith(
-  caches.match(event.request).then(cached => cached || fetch(event.request))
-));
+
+self.addEventListener("install", event => {
+  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
+});
+
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", event => {
+  if (event.request.method !== "GET") return;
+
+  const url = new URL(event.request.url);
+
+  // config.js must always come from the network so connection changes are immediate.
+  if (url.pathname.endsWith("/config.js")) {
+    event.respondWith(
+      fetch(event.request, { cache: "no-store" })
+        .catch(() => new Response(
+          'window.GAN_MAZOR_CONFIG={SUPABASE_URL:"",SUPABASE_ANON_KEY:"",KINDERGARTEN_SLUG:"gan-mazor"};',
+          { headers: { "Content-Type": "application/javascript; charset=utf-8" } }
+        ))
+    );
+    return;
+  }
+
+  const isRuntimeFile =
+    event.request.mode === "navigate" ||
+    /\.(html|js)$/.test(url.pathname);
+
+  if (isRuntimeFile) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then(cached => cached || fetch(event.request))
+  );
+});

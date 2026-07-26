@@ -5,23 +5,79 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>כניסה לגן מזור</title>
   <link rel="stylesheet" href="styles.css">
-  <style>body{display:grid;place-items:center;min-height:100vh;padding:20px}.login-card{width:min(440px,100%);background:#fff;border:1px solid var(--border);border-radius:26px;padding:28px;box-shadow:var(--shadow)}.login-card h1{margin:0 0 8px;font-size:32px}.login-card p{color:var(--muted);line-height:1.6}.demo-link{display:block;text-align:center;margin-top:14px;color:var(--navy);font-weight:800}.message{margin-top:14px;font-size:13px;color:var(--muted)}</style>
+  <style>
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .login-card {
+      width: min(440px, 100%);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+    .login-card h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+    .login-card p {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .demo-link {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      color: var(--navy);
+      font-weight: 800;
+    }
+    .message {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .message.success {
+      color: #2f6b4f;
+      font-weight: 700;
+    }
+    .message.error {
+      color: #9a3737;
+      font-weight: 700;
+    }
+  </style>
 </head>
 <body>
   <main class="login-card">
-    <p class="eyebrow">כניסה מאובטחת</p><h1>גן מזור</h1><p>לאחר החיבור ל־Supabase יישלח קישור כניסה חד־פעמי למייל. כרגע אפשר להיכנס לדמו.</p>
-    <form id="loginForm"><label>כתובת מייל<input id="email" type="email" autocomplete="email" required placeholder="name@example.com"></label><button class="primary-button" type="submit">שליחת קישור כניסה</button></form>
-    <a class="demo-link" href="index.html">כניסה למצב הדמו</a><div id="message" class="message"></div>
+    <p class="eyebrow">כניסה מאובטחת</p>
+    <h1>גן מזור</h1>
+    <p>נשלח אלייך קישור כניסה חד־פעמי למייל. אין צורך לזכור סיסמה.</p>
+
+    <form id="loginForm">
+      <label>
+        כתובת מייל
+        <input id="email" type="email" autocomplete="email" required placeholder="name@example.com">
+      </label>
+      <button class="primary-button" type="submit" disabled>שליחת קישור כניסה</button>
+    </form>
+
+    <a class="demo-link" href="index.html">כניסה למצב הדמו</a>
+    <div id="message" class="message">טוענת את הגדרות החיבור…</div>
   </main>
-  <script>
-    // טוען תמיד את הגדרות Supabase מהגרסה העדכנית ביותר.
-    document.write('<script src="config.js?v=' + Date.now() + '"><\\/script>');
-  </script>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const form = document.getElementById('loginForm');
-    const message = document.getElementById('message');
+    const form = document.getElementById("loginForm");
+    const message = document.getElementById("message");
     const button = form.querySelector('button[type="submit"]');
+
+    function setMessage(text, type = "") {
+      message.textContent = text;
+      message.className = `message ${type}`.trim();
+    }
 
     function getConfig() {
       return window.GAN_MAZOR_CONFIG || {};
@@ -32,28 +88,53 @@
       return Boolean(
         config.SUPABASE_URL &&
         config.SUPABASE_ANON_KEY &&
-        config.SUPABASE_URL.endsWith('.supabase.co') &&
-        config.SUPABASE_ANON_KEY.startsWith('sb_publishable_')
+        config.SUPABASE_URL.endsWith(".supabase.co") &&
+        config.SUPABASE_ANON_KEY.startsWith("sb_publishable_")
       );
     }
 
-    if (connectionIsReady()) {
-      message.textContent = 'החיבור מוכן. אפשר לשלוח קישור כניסה.';
-    } else {
-      message.textContent = 'הגדרות החיבור עדיין לא נטענו. רעננו את העמוד.';
+    function loadFreshConfig() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = `config.js?v=${Date.now()}`;
+        script.async = true;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
     }
 
-    form.addEventListener('submit', async (event) => {
+    async function initializeLogin() {
+      try {
+        await loadFreshConfig();
+
+        if (!connectionIsReady()) {
+          throw new Error("קובץ החיבור נטען, אך חסרים בו פרטי Supabase.");
+        }
+
+        button.disabled = false;
+        setMessage("החיבור מוכן. אפשר לשלוח קישור כניסה.", "success");
+      } catch (error) {
+        console.error(error);
+        button.disabled = true;
+        setMessage(
+          "הגדרות החיבור לא נטענו. רענני את העמוד בעוד דקה.",
+          "error"
+        );
+      }
+    }
+
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
       if (!connectionIsReady()) {
-        message.textContent = 'הגדרות החיבור עדיין לא נטענו. רעננו את העמוד.';
+        setMessage("החיבור עדיין לא מוכן. רענני את העמוד.", "error");
         return;
       }
 
       button.disabled = true;
-      button.textContent = 'שולחת...';
-      message.textContent = '';
+      button.textContent = "שולחת…";
+      setMessage("");
 
       try {
         const config = getConfig();
@@ -62,24 +143,33 @@
           config.SUPABASE_ANON_KEY
         );
 
-        const redirectUrl = new URL('index.html', window.location.href).href;
-        redirectUrl.search = '';
+        const redirectUrl = new URL("index.html", window.location.href);
+        redirectUrl.search = "";
+        redirectUrl.hash = "";
 
         const { error } = await client.auth.signInWithOtp({
-          email: document.getElementById('email').value.trim(),
-          options: { emailRedirectTo: redirectUrl.toString() }
+          email: document.getElementById("email").value.trim(),
+          options: {
+            emailRedirectTo: redirectUrl.toString()
+          }
         });
 
         if (error) throw error;
-        message.textContent = 'הקישור נשלח. בדקו גם בתיקיית הספאם.';
+
+        setMessage(
+          "הקישור נשלח. בדקי את תיבת המייל וגם את תיקיית הספאם.",
+          "success"
+        );
       } catch (error) {
         console.error(error);
-        message.textContent = error?.message || 'לא ניתן לשלוח כרגע.';
+        setMessage(error?.message || "לא ניתן לשלוח כרגע.", "error");
       } finally {
         button.disabled = false;
-        button.textContent = 'שליחת קישור כניסה';
+        button.textContent = "שליחת קישור כניסה";
       }
     });
+
+    initializeLogin();
   </script>
 </body>
 </html>

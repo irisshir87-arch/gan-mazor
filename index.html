@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#17213d">
+  <meta name="description" content="אפליקציית גן מזור – מידע, אלבומים, קהילה וועד הגן">
+  <title>גן מזור</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">קהילת הגן</p>
+        <h1>גן מזור</h1>
+      </div>
+      <button class="profile-chip" id="profileChip" aria-label="עריכת פרופיל">
+        <span class="profile-avatar" aria-hidden="true">א</span>
+        <span id="profileLabel">הגדרת פרופיל</span>
+      </button>
+    </header>
+
+    <main id="app" tabindex="-1">
+      <section class="screen active" id="homeScreen" data-screen="home" aria-labelledby="homeTitle">
+        <div class="screen-heading">
+          <div>
+            <p class="eyebrow">יום חמישי, 24 ביולי</p>
+            <h2 id="homeTitle">היום בגן</h2>
+          </div>
+          <span class="status-badge">עודכן 12:30</span>
+        </div>
+
+        <article class="card staff-card">
+          <div class="section-title-row">
+            <h3>הצוות היום</h3>
+            <span class="muted">בוקר וצהרון</span>
+          </div>
+
+          <div class="staff-group">
+            <h4>צוות בוקר</h4>
+            <div class="people-grid">
+              <div class="person">
+                <img src="assets/staff-yael.svg" alt="יעל, גננת">
+                <div><strong>יעל</strong><span>גננת</span></div>
+              </div>
+              <div class="person">
+                <img src="assets/staff-michal.svg" alt="מיכל, סייעת">
+                <div><strong>מיכל</strong><span>סייעת</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="staff-group">
+            <h4>צוות צהרון</h4>
+            <div class="people-grid">
+              <div class="person">
+                <img src="assets/staff-liron.svg" alt="לירון, מובילת צהרון">
+                <div><strong>לירון</strong><span>מובילת צהרון</span></div>
+              </div>
+              <div class="person">
+                <img src="assets/staff-shira.svg" alt="שירה, סייעת">
+                <div><strong>שירה</strong><span>סייעת</span></div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card activity-card">
+          <div class="section-title-row">
+            <h3>פעילויות היום</h3>
+            <span class="soft-icon" aria-hidden="true">✦</span>
+          </div>
+
+          <button class="expandable-row" id="meetingToggle" aria-expanded="false" aria-controls="meetingDetails">
+            <span class="row-icon">☀</span>
+            <span class="row-main">
+              <strong>מפגש הבוקר</strong>
+              <small>העונות ומזג האוויר</small>
+            </span>
+            <span class="chevron">⌄</span>
+          </button>
+          <div class="expandable-details" id="meetingDetails" hidden>
+            דיברנו על קיץ וחורף, מיינו פריטי לבוש לפי העונה ולמדנו את השיר „איזה יום יפה”.
+          </div>
+
+          <div class="simple-row">
+            <span class="row-icon">♪</span>
+            <span class="row-main">
+              <strong>החוג היום</strong>
+              <small>מוזיקה ותנועה עם דנה</small>
+            </span>
+          </div>
+        </article>
+
+        <article class="card daily-album-card">
+          <div>
+            <p class="eyebrow">האלבום היומי</p>
+            <h3>12 תמונות מהיום</h3>
+            <button class="text-link" data-go="albums">לצפייה באלבום ←</button>
+          </div>
+          <div class="album-preview" aria-hidden="true">
+            <img src="assets/album-1.svg" alt="">
+            <img src="assets/album-2.svg" alt="">
+            <img src="assets/album-3.svg" alt="">
+          </div>
+        </article>
+
+        <article class="card shabbat-card">
+          <div class="section-title-row">
+            <h3>אבא ואמא של שבת</h3>
+            <span class="muted">השבוע</span>
+          </div>
+          <div class="shabbat-kids">
+            <div class="kid">
+              <img src="assets/kid-noam.svg" alt="נועם">
+              <strong>נועם</strong>
+            </div>
+            <div class="kid">
+              <img src="assets/kid-aya.svg" alt="איה">
+              <strong>איה</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="card reminder-card">
+          <div class="reminder-icon">!</div>
+          <div>
+            <p class="eyebrow">תזכורת למחר</p>
+            <h3>להביא בקבוק מים וכובע</h3>
+          </div>
+        </article>
+      </section>
+
+      <section class="screen" id="calendarScreen" data-screen="calendar" aria-labelledby="calendarTitle">
+        <div class="screen-heading">
+          <div>
+            <p class="eyebrow">יולי 2026</p>
+            <h2 id="calendarTitle">לוח שנה</h2>
+          </div>
+          <button class="icon-button" aria-label="מעבר לחודש הבא">‹</button>
+        </div>
+
+        <article class="card calendar-card">
+          <div class="calendar-grid calendar-labels">
+            <span>א׳</span><span>ב׳</span><span>ג׳</span><span>ד׳</span><span>ה׳</span><span>ו׳</span><span>ש׳</span>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <div class="calendar-legend">
+            <span><i class="legend-dot no-kindergarten"></i>אין גן</span>
+            <span><i class="legend-dot birthday"></i>יום הולדת</span>
+            <span><i class="legend-dot event"></i>אירוע</span>
+          </div>
+        </article>
+
+        <div class="section-title-row outside">
+          <h3>אירועים קרובים</h3>
+          <button class="text-link" id="addReminderBtn">הוספת תזכורת</button>
+        </div>
+
+        <div class="event-list">
+          <article class="event-card no-kindergarten">
+            <div class="date-tile"><strong>27</strong><span>יולי</span></div>
+            <div><strong>אין גן</strong><span>יום היערכות לצוות</span></div>
+          </article>
+          <article class="event-card">
+            <div class="date-tile"><strong>30</strong><span>יולי</span></div>
+            <div><strong>יום הולדת לליה</strong><span>חוגגים במפגש הבוקר</span></div>
+          </article>
+          <article class="event-card">
+            <div class="date-tile"><strong>02</strong><span>אוג׳</span></div>
+            <div><strong>מסיבת קיץ</strong><span>אירוע משפחות בחצר הגן</span></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="screen" id="albumsScreen" data-screen="albums" aria-labelledby="albumsTitle">
+        <div class="screen-heading">
+          <div>
+            <p class="eyebrow">נמחק אחרי שבוע</p>
+            <h2 id="albumsTitle">אלבומי הגן</h2>
+          </div>
+          <span class="status-badge">פרטי להורי הגן</span>
+        </div>
+
+        <div class="albums-list">
+          <article class="album-date-card">
+            <div class="album-date-heading">
+              <div><strong>היום</strong><span>24 ביולי 2026</span></div>
+              <span>12 תמונות</span>
+            </div>
+            <div class="photo-grid">
+              <img src="assets/album-1.svg" alt="פעילות יצירה בגן">
+              <img src="assets/album-2.svg" alt="משחק בחצר">
+              <img src="assets/album-3.svg" alt="מפגש קבוצתי">
+              <img src="assets/album-4.svg" alt="שולחן פעילות">
+            </div>
+          </article>
+
+          <article class="album-date-card">
+            <div class="album-date-heading">
+              <div><strong>אתמול</strong><span>23 ביולי 2026</span></div>
+              <span>8 תמונות</span>
+            </div>
+            <div class="photo-grid">
+              <img src="assets/album-5.svg" alt="ציור וצבע">
+              <img src="assets/album-6.svg" alt="משחקי קוביות">
+              <img src="assets/album-7.svg" alt="חצר הגן">
+              <img src="assets/album-8.svg" alt="פעילות מוזיקלית">
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="screen" id="communityScreen" data-screen="community" aria-labelledby="communityTitle">
+        <div class="screen-heading">
+          <div>
+            <p class="eyebrow">עזרה ושיתוף בין הורים</p>
+            <h2 id="communityTitle">קהילה</h2>
+          </div>
+        </div>
+
+        <div class="section-title-row outside">
+          <h3>אירועים פתוחים</h3>
+          <span class="muted">נמחק אוטומטית כשלא רלוונטי</span>
+        </div>
+
+        <div id="communityFeed" class="community-feed">
+          <article class="community-card">
+            <div class="community-card-icon">🚗</div>
+            <div class="community-card-content">
+              <span class="tag">עזרה באיסוף</span>
+              <h3>נועם</h3>
+              <p class="community-meta">בקשה פתוחה להיום</p>
+              <button class="secondary-button respond-btn">אני יכול/ה לעזור</button>
+            </div>
+          </article>
+
+          <article class="community-card">
+            <div class="community-card-icon">🎁</div>
+            <div class="community-card-content">
+              <span class="tag">למסירה</span>
+              <h3>מיטת תינוק</h3>
+              <p class="community-meta">פריט אחד פשוט וברור</p>
+              <button class="secondary-button respond-btn">מתעניין/ת</button>
+            </div>
+          </article>
+
+          <article class="community-card">
+            <div class="community-card-icon">🌳</div>
+            <div class="community-card-content">
+              <span class="tag">בילוי בגינה</span>
+              <h3>איה</h3>
+              <p class="community-meta">גינת השקד</p>
+              <button class="secondary-button respond-btn">מצטרפים</button>
+            </div>
+          </article>
+        </div>
+
+        <div class="section-title-row outside">
+          <h3>הוספת אירוע חדש</h3>
+          <span class="muted">בחירה מהירה ופשוטה</span>
+        </div>
+
+        <div class="community-actions">
+          <button class="action-tile" data-community-form="pickup">
+            <span class="tile-icon">🚗</span>
+            <strong>עזרה באיסוף</strong>
+            <small>שם הילד בלבד</small>
+          </button>
+          <button class="action-tile" data-community-form="give">
+            <span class="tile-icon">🎁</span>
+            <strong>למסירה</strong>
+            <small>פריט אחד בקצרה</small>
+          </button>
+          <button class="action-tile" data-community-form="park">
+            <span class="tile-icon">🌳</span>
+            <strong>בילוי בגינה</strong>
+            <small>שם הילד + שם הגינה</small>
+          </button>
+        </div>
+      </section>
+
+      <section class="screen" id="committeeScreen" data-screen="committee" aria-labelledby="committeeTitle">
+        <div class="screen-heading">
+          <div>
+            <p class="eyebrow">שקיפות ופעילות משותפת</p>
+            <h2 id="committeeTitle">ועד הגן</h2>
+          </div>
+          <span class="status-badge">מעודכן</span>
+        </div>
+
+        <div class="section-title-row outside first">
+          <h3>יוזמות פתוחות</h3>
+          <span class="muted">מופיעות רק כשהוועד מפעיל</span>
+        </div>
+
+        <article class="card initiative-card poll-card">
+          <div class="initiative-header">
+            <div>
+              <span class="tag">סקר פעיל</span>
+              <h3>באיזה יום נקיים את מסיבת הקיץ?</h3>
+            </div>
+            <span class="participants">18 הצביעו</span>
+          </div>
+
+          <label class="poll-option">
+            <input type="radio" name="summerPoll" value="31">
+            <span>יום חמישי, 31.7</span>
+            <small>44%</small>
+          </label>
+          <label class="poll-option">
+            <input type="radio" name="summerPoll" value="1">
+            <span>יום שישי, 1.8</span>
+            <small>56%</small>
+          </label>
+          <button class="primary-button" id="voteBtn">שליחת הצבעה</button>
+        </article>
+
+        <article class="card initiative-card treats-card">
+          <div class="initiative-header">
+            <div>
+              <span class="tag">רשימת כיבוד</span>
+              <h3>מסיבת סיום</h3>
+            </div>
+            <span class="participants">6 מתוך 9</span>
+          </div>
+
+          <div class="treat-list" id="treatList">
+            <button class="treat-item" data-item="פירות חתוכים">
+              <span>פירות חתוכים</span><small>פנוי</small>
+            </button>
+            <button class="treat-item taken" disabled>
+              <span>עוגה</span><small>נועם</small>
+            </button>
+            <button class="treat-item" data-item="שתייה">
+              <span>שתייה</span><small>פנוי</small>
+            </button>
+          </div>
+        </article>
+
+        <article class="card fund-card">
+          <div class="section-title-row">
+            <h3>קופת ועד הגן</h3>
+            <span class="muted">לאחר הוצאות</span>
+          </div>
+          <div class="fund-amount">2,840 ₪</div>
+          <div class="fund-stats">
+            <div><span>נאסף</span><strong>4,600 ₪</strong></div>
+            <div><span>הוצאות</span><strong>1,760 ₪</strong></div>
+          </div>
+          <a class="paybox-button" href="https://payboxapp.page.link/" target="_blank" rel="noopener">
+            מעבר ל־PayBox
+          </a>
+        </article>
+
+        <article class="card expenses-card">
+          <div class="section-title-row">
+            <h3>הוצאות אחרונות</h3>
+            <button class="text-link" id="showAllExpenses">הצגת הכול</button>
+          </div>
+          <div class="expense-row"><span>מתנות סוף שנה</span><strong>980 ₪</strong></div>
+          <div class="expense-row"><span>ציוד למסיבת קיץ</span><strong>480 ₪</strong></div>
+          <div class="expense-row"><span>קישוטים</span><strong>300 ₪</strong></div>
+        </article>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="ניווט ראשי">
+      <button class="nav-item active" data-target="home">
+        <span>⌂</span><small>בית</small>
+      </button>
+      <button class="nav-item" data-target="calendar">
+        <span>□</span><small>לוח שנה</small>
+      </button>
+      <button class="nav-item" data-target="albums">
+        <span>▧</span><small>אלבומים</small>
+      </button>
+      <button class="nav-item" data-target="community">
+        <span>♧</span><small>קהילה</small>
+      </button>
+      <button class="nav-item" data-target="committee">
+        <span>₪</span><small>ועד</small>
+      </button>
+    </nav>
+  </div>
+
+  <div class="modal-backdrop" id="profileModal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+      <button class="modal-close" data-close-modal aria-label="סגירה">×</button>
+      <p class="eyebrow">פרופיל מינימלי</p>
+      <h2 id="profileTitle">מי מצטרף לגן מזור?</h2>
+      <p class="modal-copy">הפרטים ישמשו לזיהוי בהרשמות. להורים אחרים יוצג שם הילד בלבד.</p>
+      <form id="profileForm">
+        <label>
+          שם ההורה
+          <input id="parentName" name="parentName" autocomplete="name" required placeholder="לדוגמה: איריס">
+        </label>
+        <label>
+          שם הילד
+          <input id="childName" name="childName" required placeholder="לדוגמה: אלון">
+        </label>
+        <label>
+          הקשר לילד
+          <select id="relation" name="relation">
+            <option>אמא של</option>
+            <option>אבא של</option>
+            <option>הורה של</option>
+          </select>
+        </label>
+        <button class="primary-button" type="submit">שמירת פרופיל</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="communityModal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="communityFormTitle">
+      <button class="modal-close" data-close-community aria-label="סגירה">×</button>
+      <p class="eyebrow">פרסום בקהילה</p>
+      <h2 id="communityFormTitle">פרסום חדש</h2>
+      <form id="communityForm">
+        <input type="hidden" id="communityType">
+        <label id="communityInputLabel">
+          פרטים
+          <input id="communityValue" required>
+        </label>
+        <label id="communityExtraLabel" hidden>
+          פרטים נוספים
+          <input id="communityExtraValue">
+        </label>
+        <button class="primary-button" type="submit">פרסום</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="config.js"></script>
+  <script src="state.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

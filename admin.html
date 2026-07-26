@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#17213d">
+  <title>ניהול גן מזור</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <header class="admin-topbar">
+      <div><p class="eyebrow">אזור ניהול</p><h1>גן מזור</h1></div>
+      <div class="admin-actions"><span class="status-badge">מצב דמו</span><a class="secondary-link" href="index.html">צפייה כאילו אני הורה</a></div>
+    </header>
+
+    <main class="admin-main">
+      <nav class="admin-tabs" aria-label="מסכי ניהול">
+        <button class="admin-tab active" data-admin-target="today">היום בגן</button>
+        <button class="admin-tab" data-admin-target="calendar">לוח שנה</button>
+        <button class="admin-tab" data-admin-target="albums">אלבומים</button>
+        <button class="admin-tab" data-admin-target="committee">ועד הגן</button>
+      </nav>
+
+      <section class="admin-panel active" data-admin-panel="today">
+        <div class="admin-heading"><div><p class="eyebrow">לצוות הגן</p><h2>עדכון היום</h2></div><span class="admin-note">עדכון קצר ופשוט שאמור לקחת פחות מדקה</span></div>
+        <form id="todayForm" class="admin-card">
+          <h3>צוות בוקר</h3>
+          <div class="form-grid two">
+            <label>שם 1<input name="morningName1" required></label><label>תפקיד 1<input name="morningRole1" required></label>
+            <label>שם 2<input name="morningName2" required></label><label>תפקיד 2<input name="morningRole2" required></label>
+          </div>
+          <h3>צוות צהרון</h3>
+          <div class="form-grid two">
+            <label>שם 1<input name="afternoonName1" required></label><label>תפקיד 1<input name="afternoonRole1" required></label>
+            <label>שם 2<input name="afternoonName2" required></label><label>תפקיד 2<input name="afternoonRole2" required></label>
+          </div>
+          <h3>תוכן היום</h3>
+          <div class="form-grid">
+            <label>נושא מפגש הבוקר<input name="meetingTitle" required></label>
+            <label>הרחבה קצרה<textarea name="meetingDetails" rows="3"></textarea></label>
+            <label>החוג היום<input name="activityTitle"></label>
+            <label>תזכורת למחר<input name="reminder"></label>
+          </div>
+          <h3>אבא ואמא של שבת</h3>
+          <div class="form-grid two"><label>שם ילד/ה 1<input name="shabbat1"></label><label>שם ילד/ה 2<input name="shabbat2"></label></div>
+          <button class="primary-button" type="submit">שמירת עדכון היום</button>
+        </form>
+      </section>
+
+      <section class="admin-panel" data-admin-panel="calendar">
+        <div class="admin-heading"><div><p class="eyebrow">לצוות הגן</p><h2>לוח שנה</h2></div></div>
+        <form id="eventForm" class="admin-card compact-form">
+          <h3>הוספת אירוע</h3>
+          <div class="form-grid two"><label>תאריך<input name="eventDate" type="date" required></label><label>סוג<select name="eventType"><option value="event">אירוע</option><option value="birthday">יום הולדת</option><option value="holiday">חג</option><option value="no-kindergarten">אין גן</option></select></label></div>
+          <label>כותרת<input name="eventTitle" required></label><label>פרטים קצרים<input name="eventDetails"></label>
+          <button class="primary-button" type="submit">הוספה ללוח השנה</button>
+        </form>
+        <section class="admin-card"><div class="admin-card-title"><h3>אירועים קיימים</h3><span class="muted">„אין גן” מוצג באדום להורים</span></div><div id="adminEvents" class="admin-list"></div></section>
+      </section>
+
+      <section class="admin-panel" data-admin-panel="albums">
+        <div class="admin-heading"><div><p class="eyebrow">לצוות הגן</p><h2>אלבומים</h2></div><span class="admin-note">האלבום נמחק אחרי שבוע</span></div>
+        <form id="albumForm" class="admin-card compact-form"><h3>פתיחת אלבום לתאריך</h3><label>תאריך האלבום<input name="albumDate" type="date" required></label><label>בחירת תמונות<input name="albumFiles" type="file" accept="image/*" multiple></label><p class="helper-text">במצב דמו נשמרת תצוגה מקומית. בחיבור האמיתי התמונות יישמרו באחסון פרטי.</p><button class="primary-button" type="submit">יצירת אלבום</button></form>
+        <section class="admin-card"><h3>אלבומים קיימים</h3><div id="adminAlbums" class="admin-list"></div></section>
+      </section>
+
+      <section class="admin-panel" data-admin-panel="committee">
+        <div class="admin-heading"><div><p class="eyebrow">לוועד הגן</p><h2>ניהול הוועד</h2></div><span class="admin-note">רק יוזמות פעילות מוצגות להורים</span></div>
+        <form id="fundForm" class="admin-card compact-form"><h3>קופת הוועד</h3><div class="form-grid two"><label>סכום שנאסף<input name="collected" type="number" min="0" step="1"></label><label>קישור PayBox<input name="paybox" type="url"></label></div><button class="primary-button" type="submit">שמירת הקופה</button></form>
+        <form id="expenseForm" class="admin-card compact-form"><h3>הוספת הוצאה</h3><div class="form-grid two"><label>תיאור<input name="description" required></label><label>סכום<input name="amount" type="number" min="0" step="1" required></label></div><label>תאריך<input name="expenseDate" type="date" required></label><button class="primary-button" type="submit">הוספת הוצאה</button></form>
+        <form id="pollForm" class="admin-card compact-form"><h3>סקר פתוח</h3><label>שאלה<input name="pollTitle" required></label><div class="form-grid two"><label>אפשרות 1<input name="pollOption1" required></label><label>אפשרות 2<input name="pollOption2" required></label></div><label class="check-row"><input name="pollActive" type="checkbox" checked> להציג את הסקר להורים</label><button class="primary-button" type="submit">שמירת הסקר</button></form>
+        <form id="treatsForm" class="admin-card compact-form"><h3>רשימת כיבוד</h3><label>שם האירוע<input name="treatsTitle" required></label><label>פריטים, כל פריט בשורה<textarea name="treatItems" rows="5" required></textarea></label><label class="check-row"><input name="treatsActive" type="checkbox" checked> להציג את הרשימה להורים</label><button class="primary-button" type="submit">שמירת רשימת הכיבוד</button></form>
+      </section>
+    </main>
+    <div id="adminToast" class="toast" role="status" aria-live="polite"></div>
+  </div>
+  <script src="config.js"></script><script src="state.js"></script><script src="admin.js"></script>
+</body>
+</html>

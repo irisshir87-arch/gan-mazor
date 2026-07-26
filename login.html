@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>כניסה לגן מזור</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>body{display:grid;place-items:center;min-height:100vh;padding:20px}.login-card{width:min(440px,100%);background:#fff;border:1px solid var(--border);border-radius:26px;padding:28px;box-shadow:var(--shadow)}.login-card h1{margin:0 0 8px;font-size:32px}.login-card p{color:var(--muted);line-height:1.6}.demo-link{display:block;text-align:center;margin-top:14px;color:var(--navy);font-weight:800}.message{margin-top:14px;font-size:13px;color:var(--muted)}</style>
+</head>
+<body>
+  <main class="login-card">
+    <p class="eyebrow">כניסה מאובטחת</p><h1>גן מזור</h1><p>לאחר החיבור ל־Supabase יישלח קישור כניסה חד־פעמי למייל. כרגע אפשר להיכנס לדמו.</p>
+    <form id="loginForm"><label>כתובת מייל<input id="email" type="email" autocomplete="email" required placeholder="name@example.com"></label><button class="primary-button" type="submit">שליחת קישור כניסה</button></form>
+    <a class="demo-link" href="index.html">כניסה למצב הדמו</a><div id="message" class="message"></div>
+  </main>
+  <script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const form=document.getElementById('loginForm'),message=document.getElementById('message');
+    form.addEventListener('submit',async e=>{e.preventDefault();const c=window.GAN_MAZOR_CONFIG||{};if(!c.SUPABASE_URL||!c.SUPABASE_ANON_KEY){message.textContent='Supabase עדיין לא מחובר. אפשר להיכנס למצב הדמו.';return}try{const client=window.supabase.createClient(c.SUPABASE_URL,c.SUPABASE_ANON_KEY);const {error}=await client.auth.signInWithOtp({email:document.getElementById('email').value,options:{emailRedirectTo:location.href.replace('login.html','index.html')}});if(error)throw error;message.textContent='הקישור נשלח. בדקו את תיבת המייל.'}catch(err){message.textContent=err.message||'לא ניתן לשלוח כרגע.'}});
+  </script>
+</body>
+</html>

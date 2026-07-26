@@ -1,0 +1,5 @@
+window.GAN_MAZOR_CONFIG = {
+  SUPABASE_URL: "https://YOUR_PROJECT.supabase.co",
+  SUPABASE_ANON_KEY: "YOUR_PUBLISHABLE_OR_ANON_KEY",
+  KINDERGARTEN_SLUG: "gan-mazor"
+};

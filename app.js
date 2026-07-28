@@ -6,6 +6,7 @@
   const toast = document.getElementById("toast");
   let context;
   let data;
+  let allowedScreenNames = ["home", "calendar", "albums", "community", "committee"];
   const calendarViewDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   let selectedCalendarDate = null;
 
@@ -64,11 +65,33 @@
       </main>`;
   }
 
+  function configureRoleVisibility() {
+    const role = context.membership.role;
+    allowedScreenNames = role === "staff"
+      ? ["home", "calendar", "albums"]
+      : ["home", "calendar", "albums", "community", "committee"];
+
+    screens.forEach(screen => {
+      const allowed = allowedScreenNames.includes(screen.dataset.screen);
+      screen.hidden = !allowed;
+      if (!allowed) screen.classList.remove("active");
+    });
+
+    navItems.forEach(item => {
+      item.hidden = !allowedScreenNames.includes(item.dataset.target);
+    });
+
+    const visibleNavItems = navItems.filter(item => !item.hidden);
+    const navigation = document.querySelector(".bottom-nav");
+    navigation.style.gridTemplateColumns = `repeat(${visibleNavItems.length}, 1fr)`;
+  }
+
   function navigate(target) {
-    screens.forEach(screen => screen.classList.toggle("active", screen.dataset.screen === target));
-    navItems.forEach(item => item.classList.toggle("active", item.dataset.target === target));
+    const safeTarget = allowedScreenNames.includes(target) ? target : "home";
+    screens.forEach(screen => screen.classList.toggle("active", screen.dataset.screen === safeTarget));
+    navItems.forEach(item => item.classList.toggle("active", item.dataset.target === safeTarget));
     window.scrollTo({ top: 0, behavior: "smooth" });
-    history.replaceState(null, "", `#${target}`);
+    history.replaceState(null, "", `#${safeTarget}`);
   }
 
   navItems.forEach(item => item.addEventListener("click", () => navigate(item.dataset.target)));
@@ -677,6 +700,7 @@
   async function initialize() {
     try {
       context = await window.GanState.requireContext();
+      configureRoleVisibility();
       data = await window.GanState.loadSharedData(context);
       renderProfile();
       renderHome();
@@ -691,13 +715,18 @@
       });
       renderCalendar();
       renderAlbums();
-      renderCommunity();
-      renderCommittee();
-      configureCommunityForm();
 
+      if (allowedScreenNames.includes("community")) {
+        renderCommunity();
+        configureCommunityForm();
+      }
+
+      if (allowedScreenNames.includes("committee")) {
+        renderCommittee();
+      }
 
       const target = location.hash.replace("#", "");
-      if (screens.some(screen => screen.dataset.screen === target)) navigate(target);
+      navigate(allowedScreenNames.includes(target) ? target : "home");
     } catch (error) {
       console.error(error);
       showFatal(error.message || "לא ניתן לטעון את האפליקציה.");
@@ -706,11 +735,11 @@
 
   window.addEventListener("hashchange", () => {
     const target = location.hash.replace("#", "");
-    if (screens.some(screen => screen.dataset.screen === target)) navigate(target);
+    navigate(allowedScreenNames.includes(target) ? target : "home");
   });
 
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20260728-3").catch(console.warn));
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20260728-9").catch(console.warn));
   }
 
   initialize();

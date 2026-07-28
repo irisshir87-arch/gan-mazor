@@ -160,42 +160,62 @@
 
   async function loadSharedData(context) {
     const kindergartenId = context.kindergarten.id;
-    const [dailyResult, eventsResult, albumsResult, communityResult, fundResult, expensesResult, initiativesResult] = await Promise.all([
+    const role = context.membership.role;
+    const canAccessCommunityAndCommittee = ["parent", "committee", "admin"].includes(role);
+
+    const [dailyResult, eventsResult, albumsResult] = await Promise.all([
       client.from("daily_updates").select("*").eq("kindergarten_id", kindergartenId).order("update_date", { ascending: false }).limit(1).maybeSingle(),
       client.from("calendar_events").select("*").eq("kindergarten_id", kindergartenId).order("event_date", { ascending: true }),
-      client.from("albums").select("id,album_date,expires_at,album_photos(id,storage_path)").eq("kindergarten_id", kindergartenId).gt("expires_at", nowIso()).order("album_date", { ascending: false }),
-      client.from("community_items").select("*").eq("kindergarten_id", kindergartenId).eq("status", "open").gt("expires_at", nowIso()).order("created_at", { ascending: false }),
-      client.from("committee_funds").select("*").eq("kindergarten_id", kindergartenId).maybeSingle(),
-      client.from("committee_expenses").select("*").eq("kindergarten_id", kindergartenId).order("expense_date", { ascending: false }),
-      client.from("committee_initiatives").select("*").eq("kindergarten_id", kindergartenId).eq("active", true).order("created_at", { ascending: true })
+      client.from("albums").select("id,album_date,expires_at,album_photos(id,storage_path)").eq("kindergarten_id", kindergartenId).gt("expires_at", nowIso()).order("album_date", { ascending: false })
     ]);
 
-    const firstError = [dailyResult, eventsResult, albumsResult, communityResult, fundResult, expensesResult, initiativesResult]
+    const commonError = [dailyResult, eventsResult, albumsResult]
       .find(result => result.error)?.error;
-    if (firstError) throw firstError;
+    if (commonError) throw commonError;
 
-    const communityItems = communityResult.data || [];
-    const communityItemIds = communityItems.map(item => item.id);
+    let communityItems = [];
     let communityResponses = [];
-    if (communityItemIds.length) {
-      const communityResponseResult = await client
-        .from("community_responses")
-        .select("id,community_item_id,responder_id")
-        .in("community_item_id", communityItemIds);
-      if (communityResponseResult.error) throw communityResponseResult.error;
-      communityResponses = communityResponseResult.data || [];
-    }
-
-    const initiatives = initiativesResult.data || [];
-    const initiativeIds = initiatives.map(item => item.id);
+    let fund = { kindergarten_id: kindergartenId, collected_amount: 0, paybox_url: "" };
+    let expenses = [];
+    let initiatives = [];
     let responses = [];
-    if (initiativeIds.length) {
-      const responseResult = await client
-        .from("committee_responses")
-        .select("id,initiative_id,user_id,response_key,response_value")
-        .in("initiative_id", initiativeIds);
-      if (responseResult.error) throw responseResult.error;
-      responses = responseResult.data || [];
+
+    if (canAccessCommunityAndCommittee) {
+      const [communityResult, fundResult, expensesResult, initiativesResult] = await Promise.all([
+        client.from("community_items").select("*").eq("kindergarten_id", kindergartenId).eq("status", "open").gt("expires_at", nowIso()).order("created_at", { ascending: false }),
+        client.from("committee_funds").select("*").eq("kindergarten_id", kindergartenId).maybeSingle(),
+        client.from("committee_expenses").select("*").eq("kindergarten_id", kindergartenId).order("expense_date", { ascending: false }),
+        client.from("committee_initiatives").select("*").eq("kindergarten_id", kindergartenId).eq("active", true).order("created_at", { ascending: true })
+      ]);
+
+      const privateError = [communityResult, fundResult, expensesResult, initiativesResult]
+        .find(result => result.error)?.error;
+      if (privateError) throw privateError;
+
+      communityItems = communityResult.data || [];
+      fund = fundResult.data || fund;
+      expenses = expensesResult.data || [];
+      initiatives = initiativesResult.data || [];
+
+      const communityItemIds = communityItems.map(item => item.id);
+      if (communityItemIds.length) {
+        const communityResponseResult = await client
+          .from("community_responses")
+          .select("id,community_item_id,responder_id")
+          .in("community_item_id", communityItemIds);
+        if (communityResponseResult.error) throw communityResponseResult.error;
+        communityResponses = communityResponseResult.data || [];
+      }
+
+      const initiativeIds = initiatives.map(item => item.id);
+      if (initiativeIds.length) {
+        const responseResult = await client
+          .from("committee_responses")
+          .select("id,initiative_id,user_id,response_key,response_value")
+          .in("initiative_id", initiativeIds);
+        if (responseResult.error) throw responseResult.error;
+        responses = responseResult.data || [];
+      }
     }
 
     const albums = [];
@@ -216,8 +236,8 @@
       albums,
       community: communityItems,
       communityResponses,
-      fund: fundResult.data || { kindergarten_id: kindergartenId, collected_amount: 0, paybox_url: "" },
-      expenses: expensesResult.data || [],
+      fund,
+      expenses,
       initiatives,
       responses
     };
@@ -408,6 +428,9 @@
   }
 
   async function addCommunityItem(context, item) {
+    if (!["parent", "committee", "admin"].includes(context.membership.role)) {
+      throw new Error("לצוות הגן אין גישה לקהילה.");
+    }
     const expires = new Date();
     expires.setHours(expires.getHours() + 24);
     const { data, error } = await client.from("community_items").insert({
@@ -425,6 +448,9 @@
   }
 
   async function respondToCommunity(context, itemId) {
+    if (!["parent", "committee", "admin"].includes(context.membership.role)) {
+      throw new Error("לצוות הגן אין גישה לקהילה.");
+    }
     const { data, error } = await client.from("community_responses").upsert({
       community_item_id: itemId,
       responder_id: context.session.user.id
@@ -436,6 +462,9 @@
   }
 
   async function closeCommunityItem(context, itemId) {
+    if (!["parent", "committee", "admin"].includes(context.membership.role)) {
+      throw new Error("לצוות הגן אין גישה לקהילה.");
+    }
     const { data, error } = await client
       .from("community_items")
       .update({ status: "closed" })
@@ -448,6 +477,9 @@
   }
 
   async function saveCommitteeResponse(context, initiativeId, key, value) {
+    if (!["parent", "committee", "admin"].includes(context.membership.role)) {
+      throw new Error("לצוות הגן אין גישה לעמוד הוועד.");
+    }
     const { data, error } = await client.from("committee_responses").upsert({
       initiative_id: initiativeId,
       user_id: context.session.user.id,

@@ -27,14 +27,34 @@
         <div class="admin-heading"><div><p class="eyebrow">לצוות הגן</p><h2>עדכון היום</h2></div><span class="admin-note">עדכון קצר ופשוט שאמור לקחת פחות מדקה</span></div>
         <form id="todayForm" class="admin-card">
           <h3>צוות בוקר</h3>
-          <div class="form-grid two">
-            <label>שם 1<input name="morningName1" required></label><label>תפקיד 1<input name="morningRole1" required></label>
-            <label>שם 2<input name="morningName2" required></label><label>תפקיד 2<input name="morningRole2" required></label>
+          <div class="staff-edit-grid">
+            <section class="staff-edit-card">
+              <img class="staff-edit-preview" id="morningPreview1" src="assets/staff-yael.svg" alt="">
+              <label>שם<input name="morningName1" required></label>
+              <label>תפקיד<input name="morningRole1" required></label>
+              <label class="file-field">תמונה<input name="morningImage1" type="file" accept="image/*"></label>
+            </section>
+            <section class="staff-edit-card">
+              <img class="staff-edit-preview" id="morningPreview2" src="assets/staff-michal.svg" alt="">
+              <label>שם<input name="morningName2" required></label>
+              <label>תפקיד<input name="morningRole2" required></label>
+              <label class="file-field">תמונה<input name="morningImage2" type="file" accept="image/*"></label>
+            </section>
           </div>
           <h3>צוות צהרון</h3>
-          <div class="form-grid two">
-            <label>שם 1<input name="afternoonName1" required></label><label>תפקיד 1<input name="afternoonRole1" required></label>
-            <label>שם 2<input name="afternoonName2" required></label><label>תפקיד 2<input name="afternoonRole2" required></label>
+          <div class="staff-edit-grid">
+            <section class="staff-edit-card">
+              <img class="staff-edit-preview" id="afternoonPreview1" src="assets/staff-liron.svg" alt="">
+              <label>שם<input name="afternoonName1" required></label>
+              <label>תפקיד<input name="afternoonRole1" required></label>
+              <label class="file-field">תמונה<input name="afternoonImage1" type="file" accept="image/*"></label>
+            </section>
+            <section class="staff-edit-card">
+              <img class="staff-edit-preview" id="afternoonPreview2" src="assets/staff-shira.svg" alt="">
+              <label>שם<input name="afternoonName2" required></label>
+              <label>תפקיד<input name="afternoonRole2" required></label>
+              <label class="file-field">תמונה<input name="afternoonImage2" type="file" accept="image/*"></label>
+            </section>
           </div>
           <h3>תוכן היום</h3>
           <div class="form-grid">
@@ -76,9 +96,9 @@
     </main>
     <div id="adminToast" class="toast" role="status" aria-live="polite"></div>
   </div>
-  <script src="config.js?v=20260728-1"></script>
+  <script src="config.js?v=20260728-2"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="state.js?v=20260728-1"></script>
-  <script src="admin.js?v=20260728-1"></script>
+  <script src="state.js?v=20260728-2"></script>
+  <script src="admin.js?v=20260728-2"></script>
 </body>
 </html>

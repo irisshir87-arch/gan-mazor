@@ -49,6 +49,13 @@
   }
 
   const todayForm = document.getElementById("todayForm");
+  const staffImageFields = [
+    { input: "morningImage1", preview: "morningPreview1", group: "morning", index: 0, slot: "morning-1", fallback: "assets/staff-yael.svg" },
+    { input: "morningImage2", preview: "morningPreview2", group: "morning", index: 1, slot: "morning-2", fallback: "assets/staff-michal.svg" },
+    { input: "afternoonImage1", preview: "afternoonPreview1", group: "afternoon", index: 0, slot: "afternoon-1", fallback: "assets/staff-liron.svg" },
+    { input: "afternoonImage2", preview: "afternoonPreview2", group: "afternoon", index: 1, slot: "afternoon-2", fallback: "assets/staff-shira.svg" }
+  ];
+
   function fillToday() {
     const home = data.home;
     const f = todayForm.elements;
@@ -66,36 +73,73 @@
     f.reminder.value = home.reminder || "";
     f.shabbat1.value = home.shabbat[0]?.name || "";
     f.shabbat2.value = home.shabbat[1]?.name || "";
+
+    staffImageFields.forEach(field => {
+      const person = home[field.group][field.index];
+      document.getElementById(field.preview).src = person?.image || field.fallback;
+      todayForm.elements[field.input].value = "";
+    });
+  }
+
+  staffImageFields.forEach(field => {
+    todayForm.elements[field.input].addEventListener("change", event => {
+      const [file] = event.target.files;
+      if (!file) return;
+      document.getElementById(field.preview).src = URL.createObjectURL(file);
+    });
+  });
+
+  async function staffPerson(group, index, name, role, field) {
+    const current = data.home[group][index] || {};
+    const [file] = todayForm.elements[field.input].files;
+    const imagePath = file
+      ? await stateApi.uploadStaffImage(context, file, field.slot, current.imagePath || "")
+      : current.imagePath || "";
+
+    return {
+      name,
+      role,
+      ...(imagePath ? { imagePath } : { image: current.image || field.fallback })
+    };
   }
 
   todayForm.addEventListener("submit", async event => {
     event.preventDefault();
     const formValues = values(todayForm);
-    const home = {
-      morning: [
-        { name: formValues.morningName1, role: formValues.morningRole1, image: data.home.morning[0]?.image || "assets/staff-yael.svg" },
-        { name: formValues.morningName2, role: formValues.morningRole2, image: data.home.morning[1]?.image || "assets/staff-michal.svg" }
-      ],
-      afternoon: [
-        { name: formValues.afternoonName1, role: formValues.afternoonRole1, image: data.home.afternoon[0]?.image || "assets/staff-liron.svg" },
-        { name: formValues.afternoonName2, role: formValues.afternoonRole2, image: data.home.afternoon[1]?.image || "assets/staff-shira.svg" }
-      ],
-      meetingTitle: formValues.meetingTitle,
-      meetingDetails: formValues.meetingDetails,
-      activityTitle: formValues.activityTitle,
-      reminder: formValues.reminder,
-      shabbat: [
-        { name: formValues.shabbat1, image: data.home.shabbat[0]?.image || "assets/kid-noam.svg" },
-        { name: formValues.shabbat2, image: data.home.shabbat[1]?.image || "assets/kid-aya.svg" }
-      ]
-    };
+    const button = todayForm.querySelector('button[type="submit"]');
+
     try {
+      button.disabled = true;
+      button.textContent = "שומרת…";
+
+      const home = {
+        morning: [
+          await staffPerson("morning", 0, formValues.morningName1, formValues.morningRole1, staffImageFields[0]),
+          await staffPerson("morning", 1, formValues.morningName2, formValues.morningRole2, staffImageFields[1])
+        ],
+        afternoon: [
+          await staffPerson("afternoon", 0, formValues.afternoonName1, formValues.afternoonRole1, staffImageFields[2]),
+          await staffPerson("afternoon", 1, formValues.afternoonName2, formValues.afternoonRole2, staffImageFields[3])
+        ],
+        meetingTitle: formValues.meetingTitle,
+        meetingDetails: formValues.meetingDetails,
+        activityTitle: formValues.activityTitle,
+        reminder: formValues.reminder,
+        shabbat: [
+          { name: formValues.shabbat1, image: data.home.shabbat[0]?.image || "assets/kid-noam.svg" },
+          { name: formValues.shabbat2, image: data.home.shabbat[1]?.image || "assets/kid-aya.svg" }
+        ]
+      };
+
       await stateApi.saveDaily(context, home);
       data = await stateApi.loadSharedData(context);
       fillToday();
-      showToast("עדכון היום נשמר ב-Supabase.");
+      showToast("עדכון היום ותמונות הצוות נשמרו.");
     } catch (error) {
       showToast(error.message || "לא ניתן לשמור.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "שמירת עדכון היום";
     }
   });
 

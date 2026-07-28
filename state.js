@@ -119,12 +119,35 @@
     };
   }
 
+  async function signedStorageUrl(path, expiresIn = 3600) {
+    if (!path) return "";
+    const { data, error } = await client.storage.from(BUCKET).createSignedUrl(path, expiresIn);
+    if (error) {
+      console.warn("לא ניתן ליצור קישור חתום לתמונה", error);
+      return "";
+    }
+    return data?.signedUrl || "";
+  }
+
+  async function resolveHomeImages(home) {
+    const result = clone(home);
+    for (const groupName of ["morning", "afternoon"]) {
+      for (const person of result[groupName]) {
+        if (person.imagePath) {
+          const signedUrl = await signedStorageUrl(person.imagePath);
+          if (signedUrl) person.image = signedUrl;
+        }
+      }
+    }
+    return result;
+  }
+
   async function signedAlbum(album) {
     const photos = [];
     for (const photo of album.album_photos || []) {
-      const { data, error } = await client.storage.from(BUCKET).createSignedUrl(photo.storage_path, 3600);
-      if (!error && data?.signedUrl) {
-        photos.push({ id: photo.id, path: photo.storage_path, url: data.signedUrl });
+      const signedUrl = await signedStorageUrl(photo.storage_path);
+      if (signedUrl) {
+        photos.push({ id: photo.id, path: photo.storage_path, url: signedUrl });
       }
     }
     return {
@@ -166,8 +189,10 @@
     const albums = [];
     for (const album of albumsResult.data || []) albums.push(await signedAlbum(album));
 
+    const home = await resolveHomeImages(mapHome(dailyResult.data));
+
     return {
-      home: mapHome(dailyResult.data),
+      home,
       dailyRow: dailyResult.data || null,
       events: (eventsResult.data || []).map(row => ({
         id: row.id,
@@ -229,6 +254,26 @@
   function safeFileName(fileName) {
     const extension = fileName.includes(".") ? fileName.split(".").pop().toLowerCase().replace(/[^a-z0-9]/g, "") : "jpg";
     return `${crypto.randomUUID()}.${extension || "jpg"}`;
+  }
+
+  async function uploadStaffImage(context, file, slot, previousPath = "") {
+    if (!file) return previousPath || "";
+    if (!file.type.startsWith("image/")) throw new Error("אפשר להעלות קובץ תמונה בלבד.");
+    if (file.size > 5 * 1024 * 1024) throw new Error("תמונת צוות יכולה להיות עד 5MB.");
+
+    const path = `${context.kindergarten.id}/staff/${slot}/${safeFileName(file.name)}`;
+    const { error: uploadError } = await client.storage.from(BUCKET).upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || "image/jpeg"
+    });
+    if (uploadError) throw uploadError;
+
+    if (previousPath && previousPath !== path && previousPath.startsWith(`${context.kindergarten.id}/staff/`)) {
+      const { error: removeError } = await client.storage.from(BUCKET).remove([previousPath]);
+      if (removeError) console.warn("התמונה החדשה נשמרה אך הישנה לא נמחקה", removeError);
+    }
+    return path;
   }
 
   async function createAlbum(context, date, files) {
@@ -375,13 +420,16 @@
   }
 
   async function saveCommitteeResponse(context, initiativeId, key, value) {
-    const { error } = await client.from("committee_responses").upsert({
+    const { data, error } = await client.from("committee_responses").upsert({
       initiative_id: initiativeId,
       user_id: context.session.user.id,
       response_key: key,
       response_value: value || null
-    }, { onConflict: "initiative_id,user_id,response_key" });
+    }, { onConflict: "initiative_id,user_id,response_key" })
+      .select("id,initiative_id,user_id,response_key,response_value")
+      .single();
     if (error) throw error;
+    return data;
   }
 
   async function signOut() {
@@ -399,6 +447,7 @@
     addEvent,
     deleteEvent,
     createAlbum,
+    uploadStaffImage,
     deleteAlbum,
     cleanupExpiredAlbums,
     saveFund,

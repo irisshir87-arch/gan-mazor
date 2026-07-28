@@ -6,6 +6,22 @@
   const toast = document.getElementById("toast");
   let context;
   let data;
+  const calendarViewDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+  // לוח החופשות הרשמי בגנים ובבתי הספר היסודיים בחינוך היהודי, תשפ"ז.
+  // החופשות מוצגות אוטומטית ואינן דורשות הזנה ידנית של הצוות.
+  const EDUCATION_CLOSURES = [
+    { start: "2026-07-01", end: "2026-08-31", title: "חופשת הקיץ" },
+    { start: "2026-09-11", end: "2026-09-13", title: "חופשת ראש השנה" },
+    { start: "2026-09-20", end: "2026-09-21", title: "חופשת יום כיפור" },
+    { start: "2026-09-25", end: "2026-10-04", title: "חופשת סוכות" },
+    { start: "2026-12-06", end: "2026-12-12", title: "חופשת חנוכה" },
+    { start: "2027-03-23", end: "2027-03-24", title: "חופשת פורים" },
+    { start: "2027-04-13", end: "2027-04-29", title: "חופשת פסח" },
+    { start: "2027-05-12", end: "2027-05-12", title: "יום העצמאות" },
+    { start: "2027-06-10", end: "2027-06-11", title: "חופשת שבועות" },
+    { start: "2027-07-01", end: "2027-08-31", title: "חופשת הקיץ" }
+  ];
 
   const escapeHtml = value => String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -76,6 +92,8 @@
 
   function renderHome() {
     const home = data.home;
+    document.querySelector("#homeScreen .screen-heading .eyebrow").textContent =
+      new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
     const people = [...document.querySelectorAll(".staff-card .person")];
     [...home.morning, ...home.afternoon].forEach((person, index) => {
       const node = people[index];
@@ -109,19 +127,35 @@
       image.alt = "תמונה מהאלבום היומי";
       preview.appendChild(image);
     });
-    if (!album) preview.hidden = true;
+    preview.hidden = !album;
   }
 
-  function monthKey(date) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  function isoDate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  function closureForDate(iso) {
+    const officialClosure = EDUCATION_CLOSURES.find(closure => iso >= closure.start && iso <= closure.end);
+    if (officialClosure) return officialClosure;
+    const date = new Date(`${iso}T12:00:00`);
+    return date.getDay() === 6 ? { start: iso, end: iso, title: "שבת" } : null;
+  }
+
+  function formatRange(start, end) {
+    const startDate = new Date(`${start}T12:00:00`);
+    const endDate = new Date(`${end}T12:00:00`);
+    if (start === end) return formatDate(start, { day: "numeric", month: "long" });
+    if (startDate.getMonth() === endDate.getMonth()) {
+      return `${startDate.getDate()}–${endDate.getDate()} ${new Intl.DateTimeFormat("he-IL", { month: "long" }).format(endDate)}`;
+    }
+    return `${formatDate(start, { day: "numeric", month: "short" })}–${formatDate(end, { day: "numeric", month: "short" })}`;
   }
 
   function renderCalendar() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const monthLabel = new Intl.DateTimeFormat("he-IL", { month: "long", year: "numeric" }).format(now);
-    document.querySelector("#calendarScreen .eyebrow").textContent = monthLabel;
+    const year = calendarViewDate.getFullYear();
+    const month = calendarViewDate.getMonth();
+    const monthLabel = new Intl.DateTimeFormat("he-IL", { month: "long", year: "numeric" }).format(calendarViewDate);
+    document.getElementById("calendarMonthLabel").textContent = monthLabel;
 
     const grid = document.getElementById("calendarGrid");
     grid.innerHTML = "";
@@ -129,13 +163,20 @@
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const previousDays = new Date(year, month, 0).getDate();
     const cells = Math.ceil((first.getDay() + daysInMonth) / 7) * 7;
-    const eventsByDate = new Map(data.events.map(event => [event.date, event]));
+    const eventsByDate = new Map();
+
+    data.events.forEach(event => {
+      const existing = eventsByDate.get(event.date) || [];
+      existing.push(event);
+      eventsByDate.set(event.date, existing);
+    });
 
     for (let cell = 0; cell < cells; cell += 1) {
       const dayOffset = cell - first.getDay() + 1;
       let displayDay;
       let cellDate;
       let muted = false;
+
       if (dayOffset < 1) {
         displayDay = previousDays + dayOffset;
         cellDate = new Date(year, month - 1, displayDay);
@@ -149,33 +190,62 @@
         cellDate = new Date(year, month, displayDay);
       }
 
-      const iso = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, "0")}-${String(cellDate.getDate()).padStart(2, "0")}`;
-      const event = eventsByDate.get(iso);
+      const iso = isoDate(cellDate);
+      const dayEvents = eventsByDate.get(iso) || [];
+      const closure = closureForDate(iso);
       const element = document.createElement("div");
       element.className = "calendar-day";
+
       if (muted) element.classList.add("muted-day");
       if (iso === window.GanState.todayIso()) element.classList.add("today");
-      if (event?.type === "no-kindergarten") element.classList.add("no-kindergarten");
-      if (event?.type === "birthday") element.classList.add("birthday");
-      if (event && !["birthday", "no-kindergarten"].includes(event.type)) element.classList.add("event");
+      if (closure || dayEvents.some(event => event.type === "no-kindergarten")) element.classList.add("no-kindergarten");
+      if (dayEvents.some(event => event.type === "birthday")) element.classList.add("birthday");
+      if (dayEvents.some(event => !["birthday", "no-kindergarten"].includes(event.type))) element.classList.add("event");
+
+      const descriptions = [
+        closure?.title,
+        ...dayEvents.map(event => event.title)
+      ].filter(Boolean);
+      if (descriptions.length) element.title = descriptions.join(" · ");
+
       element.textContent = displayDay;
       grid.appendChild(element);
     }
 
+    const monthStart = isoDate(new Date(year, month, 1));
+    const monthEnd = isoDate(new Date(year, month + 1, 0));
+    const monthlyItems = [
+      ...EDUCATION_CLOSURES
+        .filter(closure => closure.end >= monthStart && closure.start <= monthEnd)
+        .map(closure => ({
+          id: `closure-${closure.start}`,
+          date: closure.start < monthStart ? monthStart : closure.start,
+          end: closure.end,
+          title: closure.title,
+          details: `${formatRange(closure.start, closure.end)} · אין גן`,
+          type: "no-kindergarten",
+          official: true
+        })),
+      ...data.events
+        .filter(event => event.date >= monthStart && event.date <= monthEnd)
+        .map(event => ({ ...event, end: event.date }))
+    ].sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title, "he"));
+
     const eventList = document.querySelector("#calendarScreen .event-list");
     eventList.innerHTML = "";
-    const upcoming = data.events.filter(event => event.date >= window.GanState.todayIso()).slice(0, 12);
-    if (!upcoming.length) {
-      eventList.innerHTML = '<article class="event-card"><div><strong>אין אירועים קרובים</strong><span>אירועים חדשים יופיעו כאן</span></div></article>';
+
+    if (!monthlyItems.length) {
+      eventList.innerHTML = '<article class="event-card"><div><strong>אין אירועים בחודש הזה</strong><span>אירועים חדשים יופיעו כאן</span></div></article>';
       return;
     }
-    upcoming.forEach(event => {
+
+    monthlyItems.forEach(event => {
       const date = new Date(`${event.date}T12:00:00`);
       const card = document.createElement("article");
       card.className = `event-card ${event.type === "no-kindergarten" ? "no-kindergarten" : ""}`;
       card.innerHTML = `
         <div class="date-tile"><strong>${String(date.getDate()).padStart(2, "0")}</strong><span>${escapeHtml(new Intl.DateTimeFormat("he-IL", { month: "short" }).format(date))}</span></div>
-        <div><strong>${escapeHtml(event.title)}</strong><span>${escapeHtml(event.details)}</span></div>`;
+        <div><strong>${escapeHtml(event.title)}</strong><span>${escapeHtml(event.details || "")}</span></div>`;
       eventList.appendChild(card);
     });
   }
@@ -209,9 +279,9 @@
   }
 
   const communityConfig = {
-    pickup: { label: "עזרה באיסוף", icon: "🚗", action: "אני יכול/ה לעזור" },
-    give: { label: "למסירה", icon: "🎁", action: "מתעניין/ת" },
-    park: { label: "בילוי בגינה", icon: "🌳", action: "מצטרפים" }
+    pickup: { label: "איסוף", formTitle: "עזרה באיסוף", icon: "🚗", action: "אני יכול/ה לעזור" },
+    give: { label: "מסירה", formTitle: "למסירה", icon: "🎁", action: "מתעניין/ת" },
+    park: { label: "גינה", formTitle: "בילוי בגינה", icon: "🌳", action: "מצטרפים" }
   };
 
   function renderCommunity() {
@@ -224,7 +294,7 @@
     data.community.forEach(item => {
       const config = communityConfig[item.item_type];
       const title = item.item_type === "give" ? item.item_name : item.child_name;
-      const meta = item.item_type === "park" ? item.garden_name : item.item_type === "pickup" ? "בקשה פתוחה להיום" : "פריט למסירה";
+      const meta = item.item_type === "park" ? item.garden_name : "";
       const card = document.createElement("article");
       card.className = "community-card";
       card.innerHTML = `
@@ -232,7 +302,7 @@
         <div class="community-card-content">
           <span class="tag">${config.label}</span>
           <h3>${escapeHtml(title)}</h3>
-          <p class="community-meta">${escapeHtml(meta)}</p>
+          ${meta ? `<p class="community-meta">${escapeHtml(meta)}</p>` : ""}
           <button class="secondary-button respond-btn">${config.action}</button>
         </div>`;
       card.querySelector("button").addEventListener("click", async () => {
@@ -283,8 +353,18 @@
         const selected = pollCard.querySelector('input[name="summerPoll"]:checked');
         if (!selected) return showToast("בחרו אפשרות לפני השליחה.");
         try {
-          await window.GanState.saveCommitteeResponse(context, poll.id, "vote", selected.value);
-          showToast("ההצבעה נשמרה.");
+          const savedVote = await window.GanState.saveCommitteeResponse(context, poll.id, "vote", selected.value);
+          const existingIndex = data.responses.findIndex(response =>
+            response.initiative_id === poll.id &&
+            response.user_id === context.session.user.id &&
+            response.response_key === "vote"
+          );
+          if (existingIndex >= 0) data.responses[existingIndex] = savedVote;
+          else data.responses.push(savedVote);
+          renderCommittee();
+          showToast("ההצבעה נשמרה והאחוזים עודכנו.");
+
+          // רענון נוסף מהשרת כדי לכלול הצבעות של הורים אחרים.
           data = await window.GanState.loadSharedData(context);
           renderCommittee();
         } catch (error) {
@@ -357,7 +437,7 @@
     document.querySelectorAll("[data-community-form]").forEach(button => button.addEventListener("click", () => {
       const type = button.dataset.communityForm;
       typeInput.value = type;
-      document.getElementById("communityFormTitle").textContent = communityConfig[type].label;
+      document.getElementById("communityFormTitle").textContent = communityConfig[type].formTitle;
       if (type === "give") {
         valueLabel.firstChild.textContent = "מה מוסרים?";
         valueInput.value = "";
@@ -403,14 +483,21 @@
       data = await window.GanState.loadSharedData(context);
       renderProfile();
       renderHome();
+
+      document.querySelector("[data-calendar-next]").addEventListener("click", () => {
+        calendarViewDate.setMonth(calendarViewDate.getMonth() + 1);
+        renderCalendar();
+      });
+      document.querySelector("[data-calendar-prev]").addEventListener("click", () => {
+        calendarViewDate.setMonth(calendarViewDate.getMonth() - 1);
+        renderCalendar();
+      });
       renderCalendar();
       renderAlbums();
       renderCommunity();
       renderCommittee();
       configureCommunityForm();
 
-      document.getElementById("addReminderBtn").addEventListener("click", () => showToast("תזכורות מתווספות דרך צוות הגן."));
-      document.getElementById("showAllExpenses").addEventListener("click", () => showToast("כל ההוצאות המוזנות מוצגות בעמוד."));
 
       const target = location.hash.replace("#", "");
       if (screens.some(screen => screen.dataset.screen === target)) navigate(target);
@@ -426,7 +513,7 @@
   });
 
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20260728-1").catch(console.warn));
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20260728-2").catch(console.warn));
   }
 
   initialize();

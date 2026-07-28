@@ -463,3 +463,218 @@ input:focus, select:focus { outline: 3px solid rgba(57,90,135,.15); border-color
   .action-tile { min-height: 78px; flex-direction: row; justify-content: flex-start; text-align: right; padding: 12px 16px; }
   .action-tile small { margin-right: auto; }
 }
+
+
+/* V4 — מבנה קומפקטי יותר */
+.compact-heading {
+  margin-bottom: 10px;
+}
+.compact-heading h2 {
+  font-size: 28px;
+}
+.compact-section-title {
+  margin-top: 16px !important;
+  margin-bottom: 8px !important;
+}
+.compact-section-title h3 {
+  font-size: 16px;
+}
+
+.staff-card {
+  padding: 16px 14px;
+}
+.staff-card .section-title-row {
+  margin-bottom: 12px;
+}
+.staff-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.staff-group {
+  min-width: 0;
+}
+.staff-group + .staff-group {
+  border-right: 1px solid var(--border);
+  padding-right: 12px;
+}
+.staff-group h4 {
+  margin: 0 0 9px;
+  text-align: center;
+}
+.staff-columns .people-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.staff-columns .person {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+  text-align: center;
+}
+.staff-columns .person img {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+}
+.staff-columns .person div {
+  align-items: center;
+  width: 100%;
+}
+.staff-columns .person strong {
+  font-size: 13px;
+  line-height: 1.15;
+}
+.staff-columns .person span {
+  font-size: 10px;
+  line-height: 1.2;
+  margin-top: 2px;
+  white-space: normal;
+}
+
+.calendar-toolbar {
+  direction: ltr;
+  display: grid;
+  grid-template-columns: 42px 1fr 42px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.calendar-toolbar strong {
+  text-align: center;
+  font-size: 17px;
+  direction: rtl;
+}
+.calendar-arrow {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+.calendar-arrow:active {
+  transform: scale(.96);
+}
+.calendar-list-title {
+  margin-top: 18px !important;
+}
+
+#communityScreen .screen-heading,
+#committeeScreen .screen-heading {
+  margin-bottom: 6px;
+}
+#communityScreen .community-feed,
+#committeeScreen .treat-list {
+  gap: 8px;
+}
+#communityScreen .community-card {
+  grid-template-columns: 44px 1fr;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 17px;
+  box-shadow: 0 7px 20px rgba(23,33,61,.055);
+}
+#communityScreen .community-card-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  font-size: 19px;
+}
+#communityScreen .community-card-content h3 {
+  margin: 5px 0 8px;
+  font-size: 15px;
+}
+#communityScreen .community-meta {
+  margin: -3px 0 8px;
+  font-size: 11px;
+}
+#communityScreen .tag,
+#committeeScreen .tag {
+  min-height: 21px;
+  padding: 3px 7px;
+  font-size: 10px;
+}
+#communityScreen .secondary-button {
+  min-height: 38px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+#communityScreen .community-actions {
+  gap: 7px;
+}
+#communityScreen .action-tile {
+  min-height: 92px;
+  border-radius: 16px;
+  padding: 10px 6px;
+  gap: 4px;
+}
+#communityScreen .tile-icon {
+  font-size: 21px;
+}
+#communityScreen .action-tile strong {
+  font-size: 12px;
+}
+
+#committeeScreen .card {
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 18px;
+}
+#committeeScreen .initiative-header {
+  margin-bottom: 8px;
+}
+#committeeScreen .initiative-header h3 {
+  font-size: 15px;
+  line-height: 1.35;
+  margin-top: 5px;
+}
+#committeeScreen .participants {
+  font-size: 10px;
+}
+#committeeScreen .poll-option {
+  padding: 9px 0;
+  font-size: 13px;
+}
+#committeeScreen .poll-card .primary-button {
+  min-height: 40px;
+  margin-top: 7px;
+}
+#committeeScreen .treat-item {
+  padding: 10px 11px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+#committeeScreen .fund-amount {
+  font-size: 34px;
+  margin: 0 0 12px;
+}
+#committeeScreen .fund-stats {
+  gap: 7px;
+  margin-bottom: 10px;
+}
+#committeeScreen .fund-stats div {
+  padding: 9px;
+  border-radius: 12px;
+}
+#committeeScreen .expense-row {
+  padding: 9px 0;
+}
+#committeeScreen .section-title-row {
+  margin-bottom: 9px;
+}
+
+@media (max-width: 370px) {
+  .staff-columns {
+    gap: 8px;
+  }
+  .staff-group + .staff-group {
+    padding-right: 8px;
+  }
+  .staff-columns .person img {
+    width: 50px;
+    height: 50px;
+  }
+}

@@ -39,32 +39,32 @@
             <span class="muted">בוקר וצהרון</span>
           </div>
 
-          <div class="staff-group">
-            <h4>צוות בוקר</h4>
-            <div class="people-grid">
-              <div class="person">
-                <img src="assets/staff-yael.svg" alt="יעל, גננת">
-                <div><strong>יעל</strong><span>גננת</span></div>
-              </div>
-              <div class="person">
-                <img src="assets/staff-michal.svg" alt="מיכל, סייעת">
-                <div><strong>מיכל</strong><span>סייעת</span></div>
+          <div class="staff-columns">
+            <div class="staff-group">
+              <h4>צוות בוקר</h4>
+              <div class="people-grid">
+                <div class="person">
+                  <img src="assets/staff-yael.svg" alt="יעל, גננת">
+                  <div><strong>יעל</strong><span>גננת</span></div>
+                </div>
+                <div class="person">
+                  <img src="assets/staff-michal.svg" alt="מיכל, סייעת">
+                  <div><strong>מיכל</strong><span>סייעת</span></div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="divider"></div>
-
-          <div class="staff-group">
-            <h4>צוות צהרון</h4>
-            <div class="people-grid">
-              <div class="person">
-                <img src="assets/staff-liron.svg" alt="לירון, מובילת צהרון">
-                <div><strong>לירון</strong><span>מובילת צהרון</span></div>
-              </div>
-              <div class="person">
-                <img src="assets/staff-shira.svg" alt="שירה, סייעת">
-                <div><strong>שירה</strong><span>סייעת</span></div>
+            <div class="staff-group">
+              <h4>צוות צהרון</h4>
+              <div class="people-grid">
+                <div class="person">
+                  <img src="assets/staff-liron.svg" alt="לירון, מובילת צהרון">
+                  <div><strong>לירון</strong><span>מובילת צהרון</span></div>
+                </div>
+                <div class="person">
+                  <img src="assets/staff-shira.svg" alt="שירה, סייעת">
+                  <div><strong>שירה</strong><span>סייעת</span></div>
+                </div>
               </div>
             </div>
           </div>
@@ -137,15 +137,19 @@
       </section>
 
       <section class="screen" id="calendarScreen" data-screen="calendar" aria-labelledby="calendarTitle">
-        <div class="screen-heading">
+        <div class="screen-heading compact-heading">
           <div>
-            <p class="eyebrow">יולי 2026</p>
+            <p class="eyebrow">אירועים וחופשות</p>
             <h2 id="calendarTitle">לוח שנה</h2>
           </div>
-          <button class="icon-button" aria-label="מעבר לחודש הבא">‹</button>
         </div>
 
         <article class="card calendar-card">
+          <div class="calendar-toolbar" aria-label="דפדוף בין חודשים">
+            <button class="calendar-arrow" data-calendar-next aria-label="חודש הבא">‹</button>
+            <strong id="calendarMonthLabel">יולי 2026</strong>
+            <button class="calendar-arrow" data-calendar-prev aria-label="חודש קודם">›</button>
+          </div>
           <div class="calendar-grid calendar-labels">
             <span>א׳</span><span>ב׳</span><span>ג׳</span><span>ד׳</span><span>ה׳</span><span>ו׳</span><span>ש׳</span>
           </div>
@@ -157,9 +161,8 @@
           </div>
         </article>
 
-        <div class="section-title-row outside">
-          <h3>אירועים קרובים</h3>
-          <button class="text-link" id="addReminderBtn">הוספת תזכורת</button>
+        <div class="section-title-row outside calendar-list-title">
+          <h3>אירועים בחודש</h3>
         </div>
 
         <div class="event-list">
@@ -217,16 +220,12 @@
       </section>
 
       <section class="screen" id="communityScreen" data-screen="community" aria-labelledby="communityTitle">
-        <div class="screen-heading">
-          <div>
-            <p class="eyebrow">עזרה ושיתוף בין הורים</p>
-            <h2 id="communityTitle">קהילה</h2>
-          </div>
+        <div class="screen-heading compact-heading">
+          <div><h2 id="communityTitle">קהילה</h2></div>
         </div>
 
-        <div class="section-title-row outside">
-          <h3>אירועים פתוחים</h3>
-          <span class="muted">נמחק אוטומטית כשלא רלוונטי</span>
+        <div class="section-title-row outside compact-section-title">
+          <h3>פתוח עכשיו</h3>
         </div>
 
         <div id="communityFeed" class="community-feed">
@@ -261,48 +260,42 @@
           </article>
         </div>
 
-        <div class="section-title-row outside">
-          <h3>הוספת אירוע חדש</h3>
-          <span class="muted">בחירה מהירה ופשוטה</span>
+        <div class="section-title-row outside compact-section-title">
+          <h3>הוספה</h3>
         </div>
 
         <div class="community-actions">
           <button class="action-tile" data-community-form="pickup">
             <span class="tile-icon">🚗</span>
             <strong>עזרה באיסוף</strong>
-            <small>שם הילד בלבד</small>
+            
           </button>
           <button class="action-tile" data-community-form="give">
             <span class="tile-icon">🎁</span>
             <strong>למסירה</strong>
-            <small>פריט אחד בקצרה</small>
+            
           </button>
           <button class="action-tile" data-community-form="park">
             <span class="tile-icon">🌳</span>
             <strong>בילוי בגינה</strong>
-            <small>שם הילד + שם הגינה</small>
+            
           </button>
         </div>
       </section>
 
       <section class="screen" id="committeeScreen" data-screen="committee" aria-labelledby="committeeTitle">
-        <div class="screen-heading">
-          <div>
-            <p class="eyebrow">שקיפות ופעילות משותפת</p>
-            <h2 id="committeeTitle">ועד הגן</h2>
-          </div>
-          <span class="status-badge">מעודכן</span>
+        <div class="screen-heading compact-heading">
+          <div><h2 id="committeeTitle">ועד הגן</h2></div>
         </div>
 
-        <div class="section-title-row outside first">
-          <h3>יוזמות פתוחות</h3>
-          <span class="muted">מופיעות רק כשהוועד מפעיל</span>
+        <div class="section-title-row outside first compact-section-title">
+          <h3>יוזמות</h3>
         </div>
 
         <article class="card initiative-card poll-card">
           <div class="initiative-header">
             <div>
-              <span class="tag">סקר פעיל</span>
+              <span class="tag">סקר</span>
               <h3>באיזה יום נקיים את מסיבת הקיץ?</h3>
             </div>
             <span class="participants">18 הצביעו</span>
@@ -324,7 +317,7 @@
         <article class="card initiative-card treats-card">
           <div class="initiative-header">
             <div>
-              <span class="tag">רשימת כיבוד</span>
+              <span class="tag">כיבוד</span>
               <h3>מסיבת סיום</h3>
             </div>
             <span class="participants">6 מתוך 9</span>
@@ -345,8 +338,7 @@
 
         <article class="card fund-card">
           <div class="section-title-row">
-            <h3>קופת ועד הגן</h3>
-            <span class="muted">לאחר הוצאות</span>
+            <h3>קופת הוועד</h3>
           </div>
           <div class="fund-amount">2,840 ₪</div>
           <div class="fund-stats">
@@ -360,8 +352,7 @@
 
         <article class="card expenses-card">
           <div class="section-title-row">
-            <h3>הוצאות אחרונות</h3>
-            <button class="text-link" id="showAllExpenses">הצגת הכול</button>
+            <h3>הוצאות</h3>
           </div>
           <div class="expense-row"><span>מתנות סוף שנה</span><strong>980 ₪</strong></div>
           <div class="expense-row"><span>ציוד למסיבת קיץ</span><strong>480 ₪</strong></div>
@@ -438,9 +429,9 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="config.js?v=20260728-1"></script>
+  <script src="config.js?v=20260728-2"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="state.js?v=20260728-1"></script>
-  <script src="app.js?v=20260728-1"></script>
+  <script src="state.js?v=20260728-2"></script>
+  <script src="app.js?v=20260728-2"></script>
 </body>
 </html>

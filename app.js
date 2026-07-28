@@ -7,6 +7,8 @@
   let context;
   let data;
   const calendarViewDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  let selectedCalendarDate = null;
+  let treatsExpanded = false;
 
   // לוח החופשות הרשמי בגנים ובבתי הספר היסודיים בחינוך היהודי, תשפ"ז.
   // החופשות מוצגות אוטומטית ואינן דורשות הזנה ידנית של הצוות.
@@ -169,11 +171,94 @@
     return `${formatDate(start, { day: "numeric", month: "short" })}–${formatDate(end, { day: "numeric", month: "short" })}`;
   }
 
+  function calendarItemsForDate(iso) {
+    const items = [];
+    const holiday = holidayForDate(iso);
+    const closure = closureForDate(iso);
+
+    if (holiday) {
+      items.push({
+        type: "holiday",
+        title: holiday.title,
+        details: holiday.start === holiday.end ? "חג ישראל" : formatRange(holiday.start, holiday.end)
+      });
+    }
+
+    if (closure) {
+      items.push({
+        type: "no-kindergarten",
+        title: "אין גן",
+        details: closure.title
+      });
+    }
+
+    data.events
+      .filter(event => event.date === iso)
+      .forEach(event => items.push({
+        type: event.type || "event",
+        title: event.title,
+        details: event.details || ""
+      }));
+
+    return items;
+  }
+
+  function calendarTypeLabel(type) {
+    return ({
+      holiday: "חג",
+      birthday: "יום הולדת",
+      "no-kindergarten": "אין גן",
+      event: "אירוע",
+      reminder: "תזכורת"
+    })[type] || "אירוע";
+  }
+
+  function showCalendarDayDetails(iso) {
+    selectedCalendarDate = iso;
+    const panel = document.getElementById("calendarDayDetails");
+    const title = document.getElementById("calendarSelectedDate");
+    const list = document.getElementById("calendarSelectedItems");
+    const items = calendarItemsForDate(iso);
+
+    title.textContent = formatDate(iso, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    list.innerHTML = "";
+
+    if (!items.length) {
+      list.innerHTML = '<p class="calendar-empty-day">אין אירוע, חג או יום הולדת ביום הזה.</p>';
+    } else {
+      items.forEach(item => {
+        const row = document.createElement("article");
+        row.className = `calendar-selected-item ${escapeHtml(item.type)}`;
+        row.innerHTML = `
+          <span class="calendar-selected-type">${escapeHtml(calendarTypeLabel(item.type))}</span>
+          <div>
+            <strong>${escapeHtml(item.title)}</strong>
+            ${item.details ? `<span>${escapeHtml(item.details)}</span>` : ""}
+          </div>`;
+        list.appendChild(row);
+      });
+    }
+
+    panel.hidden = false;
+    document.querySelectorAll(".calendar-day").forEach(day => {
+      day.classList.toggle("selected", day.dataset.date === iso);
+    });
+  }
+
   function renderCalendar() {
     const year = calendarViewDate.getFullYear();
     const month = calendarViewDate.getMonth();
     const monthLabel = new Intl.DateTimeFormat("he-IL", { month: "long", year: "numeric" }).format(calendarViewDate);
     document.getElementById("calendarMonthLabel").textContent = monthLabel;
+
+    const selectedPanel = document.getElementById("calendarDayDetails");
+    if (selectedCalendarDate) {
+      const selected = new Date(`${selectedCalendarDate}T12:00:00`);
+      if (selected.getFullYear() !== year || selected.getMonth() !== month) {
+        selectedCalendarDate = null;
+        selectedPanel.hidden = true;
+      }
+    }
 
     const grid = document.getElementById("calendarGrid");
     grid.innerHTML = "";
@@ -212,8 +297,11 @@
       const dayEvents = eventsByDate.get(iso) || [];
       const closure = closureForDate(iso);
       const holiday = holidayForDate(iso);
-      const element = document.createElement("div");
+      const element = document.createElement("button");
+      element.type = "button";
       element.className = "calendar-day";
+      element.dataset.date = iso;
+      element.setAttribute("aria-label", formatDate(iso, { weekday: "long", day: "numeric", month: "long" }));
 
       const isSaturday = cellDate.getDay() === 6;
       if (muted) element.classList.add("muted-day");
@@ -231,6 +319,8 @@
       if (descriptions.length) element.title = descriptions.join(" · ");
 
       element.textContent = displayDay;
+      if (selectedCalendarDate === iso) element.classList.add("selected");
+      element.addEventListener("click", () => showCalendarDayDetails(iso));
       grid.appendChild(element);
     }
 
@@ -282,6 +372,12 @@
       eventList.appendChild(card);
     });
   }
+
+  document.getElementById("calendarDetailsClose").addEventListener("click", () => {
+    selectedCalendarDate = null;
+    document.getElementById("calendarDayDetails").hidden = true;
+    document.querySelectorAll(".calendar-day.selected").forEach(day => day.classList.remove("selected"));
+  });
 
   function renderAlbums() {
     const list = document.querySelector(".albums-list");
@@ -419,6 +515,16 @@
       const claims = data.responses.filter(response => response.initiative_id === treats.id && response.response_key.startsWith("treat:"));
       treatsCard.querySelector(".participants").textContent = `${claims.length} מתוך ${items.length}`;
       const list = document.getElementById("treatList");
+      const toggle = document.getElementById("treatsToggle");
+      list.hidden = !treatsExpanded;
+      treatsCard.classList.toggle("collapsed", !treatsExpanded);
+      toggle.setAttribute("aria-expanded", String(treatsExpanded));
+      toggle.onclick = () => {
+        treatsExpanded = !treatsExpanded;
+        list.hidden = !treatsExpanded;
+        treatsCard.classList.toggle("collapsed", !treatsExpanded);
+        toggle.setAttribute("aria-expanded", String(treatsExpanded));
+      };
       list.innerHTML = "";
       items.forEach((item, index) => {
         const label = typeof item === "string" ? item : item.label;

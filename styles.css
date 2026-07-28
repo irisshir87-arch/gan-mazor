@@ -787,3 +787,148 @@ input:focus, select:focus { outline: 3px solid rgba(57,90,135,.15); border-color
   border-radius: 50%;
   background: #8a6b9d;
 }
+
+
+/* V6 — פרטי יום בלוח שנה ורשימת כיבוד מתקפלת */
+.calendar-day {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.calendar-day:hover {
+  background: #edf1f5;
+}
+.calendar-day.selected {
+  box-shadow: inset 0 0 0 2px var(--navy);
+  background: #edf1f5;
+}
+.calendar-day.no-kindergarten.selected {
+  background: #f3dada;
+}
+.calendar-day-details {
+  margin-top: 12px;
+  padding: 15px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(23,33,61,.06);
+}
+.calendar-day-details-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 11px;
+}
+.calendar-day-details-heading h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.calendar-details-close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--background);
+  cursor: pointer;
+  font-size: 19px;
+  line-height: 1;
+}
+.calendar-selected-items {
+  display: grid;
+  gap: 8px;
+}
+.calendar-selected-item {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  align-items: start;
+  gap: 10px;
+  padding: 10px 11px;
+  border-radius: 13px;
+  background: var(--background);
+}
+.calendar-selected-item > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.calendar-selected-item strong {
+  font-size: 14px;
+}
+.calendar-selected-item div span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.calendar-selected-type {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 25px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--blue);
+  font-size: 10px;
+  font-weight: 800;
+}
+.calendar-selected-item.holiday .calendar-selected-type {
+  background: #eee6f2;
+  color: #684d78;
+}
+.calendar-selected-item.birthday .calendar-selected-type {
+  background: #f3e8dd;
+  color: #7d5739;
+}
+.calendar-selected-item.no-kindergarten .calendar-selected-type {
+  background: #f6dfdf;
+  color: var(--red);
+}
+.calendar-empty-day {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+#committeeScreen .screen-heading {
+  margin-bottom: 8px;
+}
+#committeeScreen .poll-card {
+  margin-top: 0;
+}
+#committeeScreen .treats-card.collapsed {
+  padding-top: 11px;
+  padding-bottom: 11px;
+}
+#committeeScreen .treats-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  text-align: right;
+  cursor: pointer;
+  align-items: center;
+  margin-bottom: 0;
+}
+#committeeScreen .treats-toggle[aria-expanded="true"] {
+  margin-bottom: 9px;
+}
+#committeeScreen .initiative-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+#committeeScreen .treats-chevron {
+  font-size: 20px;
+  line-height: 1;
+  transition: transform .18s ease;
+}
+#committeeScreen .treats-toggle[aria-expanded="true"] .treats-chevron {
+  transform: rotate(180deg);
+}
+#committeeScreen .treats-card.collapsed .tag {
+  margin-bottom: 1px;
+}

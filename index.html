@@ -161,6 +161,17 @@
           </div>
         </article>
 
+        <section class="calendar-day-details" id="calendarDayDetails" hidden aria-live="polite">
+          <div class="calendar-day-details-heading">
+            <div>
+              <p class="eyebrow">מה קורה ביום הזה</p>
+              <h3 id="calendarSelectedDate"></h3>
+            </div>
+            <button class="calendar-details-close" id="calendarDetailsClose" aria-label="סגירת פרטי היום">×</button>
+          </div>
+          <div id="calendarSelectedItems" class="calendar-selected-items"></div>
+        </section>
+
         <div class="section-title-row outside calendar-list-title">
           <h3>אירועים בחודש</h3>
         </div>
@@ -290,10 +301,6 @@
           <span class="status-badge">מעודכן</span>
         </div>
 
-        <div class="section-title-row outside first compact-first-section">
-          <h3>יוזמות פתוחות</h3>
-        </div>
-
         <article class="card initiative-card poll-card">
           <div class="initiative-header">
             <div>
@@ -316,16 +323,19 @@
           <button class="primary-button" id="voteBtn">שליחת הצבעה</button>
         </article>
 
-        <article class="card initiative-card treats-card">
-          <div class="initiative-header">
+        <article class="card initiative-card treats-card collapsed">
+          <button class="initiative-header treats-toggle" id="treatsToggle" type="button" aria-expanded="false" aria-controls="treatList">
             <div>
               <span class="tag">רשימת כיבוד</span>
               <h3>מסיבת סיום</h3>
             </div>
-            <span class="participants">6 מתוך 9</span>
-          </div>
+            <span class="initiative-summary">
+              <span class="participants">6 מתוך 9</span>
+              <span class="treats-chevron" aria-hidden="true">⌄</span>
+            </span>
+          </button>
 
-          <div class="treat-list" id="treatList">
+          <div class="treat-list" id="treatList" hidden>
             <button class="treat-item" data-item="פירות חתוכים">
               <span>פירות חתוכים</span><small>פנוי</small>
             </button>

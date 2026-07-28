@@ -174,6 +174,18 @@
       .find(result => result.error)?.error;
     if (firstError) throw firstError;
 
+    const communityItems = communityResult.data || [];
+    const communityItemIds = communityItems.map(item => item.id);
+    let communityResponses = [];
+    if (communityItemIds.length) {
+      const communityResponseResult = await client
+        .from("community_responses")
+        .select("id,community_item_id,responder_id")
+        .in("community_item_id", communityItemIds);
+      if (communityResponseResult.error) throw communityResponseResult.error;
+      communityResponses = communityResponseResult.data || [];
+    }
+
     const initiatives = initiativesResult.data || [];
     const initiativeIds = initiatives.map(item => item.id);
     let responses = [];
@@ -202,7 +214,8 @@
         type: row.event_type
       })),
       albums,
-      community: communityResult.data || [],
+      community: communityItems,
+      communityResponses,
       fund: fundResult.data || { kindergarten_id: kindergartenId, collected_amount: 0, paybox_url: "" },
       expenses: expensesResult.data || [],
       initiatives,
@@ -412,11 +425,26 @@
   }
 
   async function respondToCommunity(context, itemId) {
-    const { error } = await client.from("community_responses").upsert({
+    const { data, error } = await client.from("community_responses").upsert({
       community_item_id: itemId,
       responder_id: context.session.user.id
-    }, { onConflict: "community_item_id,responder_id" });
+    }, { onConflict: "community_item_id,responder_id" })
+      .select("id,community_item_id,responder_id")
+      .single();
     if (error) throw error;
+    return data;
+  }
+
+  async function closeCommunityItem(context, itemId) {
+    const { data, error } = await client
+      .from("community_items")
+      .update({ status: "closed" })
+      .eq("id", itemId)
+      .eq("created_by", context.session.user.id)
+      .select("id,status")
+      .single();
+    if (error) throw error;
+    return data;
   }
 
   async function saveCommitteeResponse(context, initiativeId, key, value) {
@@ -455,6 +483,7 @@
     saveInitiative,
     addCommunityItem,
     respondToCommunity,
+    closeCommunityItem,
     saveCommitteeResponse,
     signOut
   };

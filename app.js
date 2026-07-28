@@ -8,7 +8,6 @@
   let data;
   const calendarViewDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   let selectedCalendarDate = null;
-  let treatsExpanded = false;
 
   // לוח החופשות הרשמי בגנים ובבתי הספר היסודיים בחינוך היהודי, תשפ"ז.
   // החופשות מוצגות אוטומטית ואינן דורשות הזנה ידנית של הצוות.
@@ -417,9 +416,10 @@
     const feed = document.getElementById("communityFeed");
     feed.innerHTML = "";
     if (!data.community.length) {
-      feed.innerHTML = '<article class="community-card"><div class="community-card-content"><h3>אין אירועים פתוחים כרגע</h3></div></article>';
+      feed.innerHTML = '<article class="community-card community-empty"><div class="community-card-content"><h3>אין כרגע אירועים בקהילה</h3></div></article>';
       return;
     }
+
     data.community.forEach(item => {
       const config = communityConfig[item.item_type];
       const title = item.item_type === "give" ? item.item_name : item.child_name;
@@ -428,6 +428,10 @@
         : item.item_type === "pickup"
           ? item.item_name
           : "";
+      const isOwner = item.created_by === context.session.user.id;
+      const itemResponses = (data.communityResponses || []).filter(response => response.community_item_id === item.id);
+      const ownResponse = itemResponses.find(response => response.responder_id === context.session.user.id);
+
       const card = document.createElement("article");
       card.className = "community-card";
       card.innerHTML = `
@@ -436,16 +440,45 @@
           <span class="tag">${config.label}</span>
           <h3>${escapeHtml(title)}</h3>
           ${meta ? `<p class="community-meta">${escapeHtml(meta)}</p>` : ""}
-          <button class="secondary-button respond-btn">${config.action}</button>
+        </div>
+        <div class="community-card-actions">
+          ${isOwner
+            ? `<span class="community-response-count" title="מספר תגובות">👍 ${itemResponses.length}</span>
+               <button class="community-close-btn" type="button" aria-label="סגירת האירוע" title="סגירת האירוע">✓</button>`
+            : `<button class="community-thumb-btn ${ownResponse ? "active" : ""}" type="button" aria-label="${ownResponse ? "התגובה נשלחה" : "אני מעוניין או יכול לעזור"}" title="${ownResponse ? "התגובה נשלחה" : "שליחת תגובה"}">👍</button>`}
         </div>`;
-      card.querySelector("button").addEventListener("click", async () => {
-        try {
-          await window.GanState.respondToCommunity(context, item.id);
-          showToast("המענה נשמר. מפרסם/ת הבקשה יוכל/תוכל לראות אותו.");
-        } catch (error) {
-          showToast(error.message || "לא ניתן לשמור את המענה.");
-        }
-      });
+
+      if (isOwner) {
+        card.querySelector(".community-close-btn").addEventListener("click", async () => {
+          try {
+            await window.GanState.closeCommunityItem(context, item.id);
+            data.community = data.community.filter(entry => entry.id !== item.id);
+            renderCommunity();
+            showToast("האירוע נסגר והוסר מהקהילה.");
+          } catch (error) {
+            showToast(error.message || "לא ניתן לסגור את האירוע.");
+          }
+        });
+      } else {
+        const thumbButton = card.querySelector(".community-thumb-btn");
+        thumbButton.addEventListener("click", async () => {
+          if (thumbButton.classList.contains("active")) {
+            showToast("התגובה כבר נשלחה.");
+            return;
+          }
+          try {
+            const savedResponse = await window.GanState.respondToCommunity(context, item.id);
+            data.communityResponses = [...(data.communityResponses || []), savedResponse];
+            thumbButton.classList.add("active");
+            thumbButton.setAttribute("aria-label", "התגובה נשלחה");
+            thumbButton.title = "התגובה נשלחה";
+            showToast("התגובה נשלחה למפרסם/ת.");
+          } catch (error) {
+            showToast(error.message || "לא ניתן לשמור את התגובה.");
+          }
+        });
+      }
+
       feed.appendChild(card);
     });
   }
@@ -514,17 +547,12 @@
       const items = Array.isArray(treats.payload?.items) ? treats.payload.items : [];
       const claims = data.responses.filter(response => response.initiative_id === treats.id && response.response_key.startsWith("treat:"));
       treatsCard.querySelector(".participants").textContent = `${claims.length} מתוך ${items.length}`;
+
+      const modal = document.getElementById("treatsModal");
       const list = document.getElementById("treatList");
-      const toggle = document.getElementById("treatsToggle");
-      list.hidden = !treatsExpanded;
-      treatsCard.classList.toggle("collapsed", !treatsExpanded);
-      toggle.setAttribute("aria-expanded", String(treatsExpanded));
-      toggle.onclick = () => {
-        treatsExpanded = !treatsExpanded;
-        list.hidden = !treatsExpanded;
-        treatsCard.classList.toggle("collapsed", !treatsExpanded);
-        toggle.setAttribute("aria-expanded", String(treatsExpanded));
-      };
+      document.getElementById("treatsModalTitle").textContent = treats.title;
+      document.getElementById("treatsModalSummary").textContent = `${claims.length} מתוך ${items.length} פריטים נתפסו`;
+
       list.innerHTML = "";
       items.forEach((item, index) => {
         const label = typeof item === "string" ? item : item.label;
@@ -540,12 +568,23 @@
             showToast(`נרשמתם להביא: ${label}`);
             data = await window.GanState.loadSharedData(context);
             renderCommittee();
+            modal.hidden = false;
           } catch (error) {
             showToast(error.message || "לא ניתן להירשם.");
           }
         });
         list.appendChild(button);
       });
+
+      document.getElementById("treatsOpen").onclick = () => {
+        modal.hidden = false;
+      };
+      document.querySelectorAll("[data-close-treats]").forEach(button => {
+        button.onclick = () => { modal.hidden = true; };
+      });
+      modal.onclick = event => {
+        if (event.target === modal) modal.hidden = true;
+      };
     }
 
     const totalExpenses = data.expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);

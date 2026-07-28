@@ -8,7 +8,7 @@
   <title>גן מזור</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260728-3">
 </head>
 <body>
   <div class="app-shell">
@@ -36,7 +36,6 @@
         <article class="card staff-card">
           <div class="section-title-row">
             <h3>הצוות היום</h3>
-            <span class="muted">בוקר וצהרון</span>
           </div>
 
           <div class="staff-columns">
@@ -156,6 +155,7 @@
           <div class="calendar-grid" id="calendarGrid"></div>
           <div class="calendar-legend">
             <span><i class="legend-dot no-kindergarten"></i>אין גן</span>
+            <span><i class="legend-dot holiday"></i>חג</span>
             <span><i class="legend-dot birthday"></i>יום הולדת</span>
             <span><i class="legend-dot event"></i>אירוע</span>
           </div>
@@ -182,10 +182,10 @@
       </section>
 
       <section class="screen" id="albumsScreen" data-screen="albums" aria-labelledby="albumsTitle">
-        <div class="screen-heading">
+        <div class="screen-heading albums-heading">
           <div>
-            <p class="eyebrow">נמחק אחרי שבוע</p>
             <h2 id="albumsTitle">אלבומי הגן</h2>
+            <p class="screen-subtitle">התמונות נמחקות אחרי שבוע</p>
           </div>
           <span class="status-badge">פרטי להורי הגן</span>
         </div>
@@ -220,12 +220,14 @@
       </section>
 
       <section class="screen" id="communityScreen" data-screen="community" aria-labelledby="communityTitle">
-        <div class="screen-heading compact-heading">
-          <div><h2 id="communityTitle">קהילה</h2></div>
+        <div class="screen-heading compact-page-heading">
+          <div>
+            <h2 id="communityTitle">קהילה</h2>
+          </div>
         </div>
 
-        <div class="section-title-row outside compact-section-title">
-          <h3>פתוח עכשיו</h3>
+        <div class="section-title-row outside compact-first-section">
+          <h3>אירועים פתוחים</h3>
         </div>
 
         <div id="communityFeed" class="community-feed">
@@ -260,42 +262,42 @@
           </article>
         </div>
 
-        <div class="section-title-row outside compact-section-title">
-          <h3>הוספה</h3>
+        <div class="section-title-row outside compact-add-section">
+          <h3>הוספת אירוע</h3>
         </div>
 
         <div class="community-actions">
           <button class="action-tile" data-community-form="pickup">
             <span class="tile-icon">🚗</span>
-            <strong>עזרה באיסוף</strong>
-            
+            <strong>איסוף</strong>
           </button>
           <button class="action-tile" data-community-form="give">
             <span class="tile-icon">🎁</span>
-            <strong>למסירה</strong>
-            
+            <strong>מסירה</strong>
           </button>
           <button class="action-tile" data-community-form="park">
             <span class="tile-icon">🌳</span>
-            <strong>בילוי בגינה</strong>
-            
+            <strong>גינה</strong>
           </button>
         </div>
       </section>
 
       <section class="screen" id="committeeScreen" data-screen="committee" aria-labelledby="committeeTitle">
-        <div class="screen-heading compact-heading">
-          <div><h2 id="committeeTitle">ועד הגן</h2></div>
+        <div class="screen-heading compact-page-heading">
+          <div>
+            <h2 id="committeeTitle">ועד הגן</h2>
+          </div>
+          <span class="status-badge">מעודכן</span>
         </div>
 
-        <div class="section-title-row outside first compact-section-title">
-          <h3>יוזמות</h3>
+        <div class="section-title-row outside first compact-first-section">
+          <h3>יוזמות פתוחות</h3>
         </div>
 
         <article class="card initiative-card poll-card">
           <div class="initiative-header">
             <div>
-              <span class="tag">סקר</span>
+              <span class="tag">סקר פעיל</span>
               <h3>באיזה יום נקיים את מסיבת הקיץ?</h3>
             </div>
             <span class="participants">18 הצביעו</span>
@@ -317,7 +319,7 @@
         <article class="card initiative-card treats-card">
           <div class="initiative-header">
             <div>
-              <span class="tag">כיבוד</span>
+              <span class="tag">רשימת כיבוד</span>
               <h3>מסיבת סיום</h3>
             </div>
             <span class="participants">6 מתוך 9</span>
@@ -338,7 +340,8 @@
 
         <article class="card fund-card">
           <div class="section-title-row">
-            <h3>קופת הוועד</h3>
+            <h3>קופת ועד הגן</h3>
+            <span class="muted">לאחר הוצאות</span>
           </div>
           <div class="fund-amount">2,840 ₪</div>
           <div class="fund-stats">
@@ -352,7 +355,8 @@
 
         <article class="card expenses-card">
           <div class="section-title-row">
-            <h3>הוצאות</h3>
+            <h3>הוצאות אחרונות</h3>
+            <button class="text-link" id="showAllExpenses">הצגת הכול</button>
           </div>
           <div class="expense-row"><span>מתנות סוף שנה</span><strong>980 ₪</strong></div>
           <div class="expense-row"><span>ציוד למסיבת קיץ</span><strong>480 ₪</strong></div>
@@ -419,9 +423,20 @@
           פרטים
           <input id="communityValue" required>
         </label>
+        <label id="communityDayLabel" hidden>
+          יום האיסוף
+          <select id="communityDayValue">
+            <option value="יום ראשון">יום ראשון</option>
+            <option value="יום שני">יום שני</option>
+            <option value="יום שלישי">יום שלישי</option>
+            <option value="יום רביעי">יום רביעי</option>
+            <option value="יום חמישי">יום חמישי</option>
+            <option value="יום שישי">יום שישי</option>
+          </select>
+        </label>
         <label id="communityExtraLabel" hidden>
-          פרטים נוספים
-          <input id="communityExtraValue">
+          שם הגינה
+          <input id="communityExtraValue" placeholder="לדוגמה: גינת השקד">
         </label>
         <button class="primary-button" type="submit">פרסום</button>
       </form>
@@ -429,9 +444,9 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="config.js?v=20260728-2"></script>
+  <script src="config.js?v=20260728-3"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="state.js?v=20260728-2"></script>
-  <script src="app.js?v=20260728-2"></script>
+  <script src="state.js?v=20260728-3"></script>
+  <script src="app.js?v=20260728-3"></script>
 </body>
 </html>

@@ -23,6 +23,21 @@
     { start: "2027-07-01", end: "2027-08-31", title: "חופשת הקיץ" }
   ];
 
+  // חגי ישראל מוצגים כאירועים עצמאיים בלוח, בנוסף לסימון ימי החופשה.
+  const ISRAEL_HOLIDAYS = [
+    { start: "2026-09-12", end: "2026-09-13", title: "ראש השנה" },
+    { start: "2026-09-21", end: "2026-09-21", title: "יום כיפור" },
+    { start: "2026-09-26", end: "2026-10-02", title: "סוכות" },
+    { start: "2026-10-03", end: "2026-10-03", title: "שמחת תורה" },
+    { start: "2026-12-05", end: "2026-12-12", title: "חנוכה" },
+    { start: "2027-01-23", end: "2027-01-23", title: "ט״ו בשבט" },
+    { start: "2027-03-23", end: "2027-03-23", title: "פורים" },
+    { start: "2027-04-22", end: "2027-04-28", title: "פסח" },
+    { start: "2027-05-12", end: "2027-05-12", title: "יום העצמאות" },
+    { start: "2027-05-25", end: "2027-05-25", title: "ל״ג בעומר" },
+    { start: "2027-06-11", end: "2027-06-11", title: "שבועות" }
+  ];
+
   const escapeHtml = value => String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -135,10 +150,13 @@
   }
 
   function closureForDate(iso) {
-    const officialClosure = EDUCATION_CLOSURES.find(closure => iso >= closure.start && iso <= closure.end);
-    if (officialClosure) return officialClosure;
     const date = new Date(`${iso}T12:00:00`);
-    return date.getDay() === 6 ? { start: iso, end: iso, title: "שבת" } : null;
+    if (date.getDay() === 6) return null;
+    return EDUCATION_CLOSURES.find(closure => iso >= closure.start && iso <= closure.end) || null;
+  }
+
+  function holidayForDate(iso) {
+    return ISRAEL_HOLIDAYS.find(holiday => iso >= holiday.start && iso <= holiday.end) || null;
   }
 
   function formatRange(start, end) {
@@ -193,16 +211,20 @@
       const iso = isoDate(cellDate);
       const dayEvents = eventsByDate.get(iso) || [];
       const closure = closureForDate(iso);
+      const holiday = holidayForDate(iso);
       const element = document.createElement("div");
       element.className = "calendar-day";
 
+      const isSaturday = cellDate.getDay() === 6;
       if (muted) element.classList.add("muted-day");
       if (iso === window.GanState.todayIso()) element.classList.add("today");
-      if (closure || dayEvents.some(event => event.type === "no-kindergarten")) element.classList.add("no-kindergarten");
+      if (!isSaturday && (closure || dayEvents.some(event => event.type === "no-kindergarten"))) element.classList.add("no-kindergarten");
+      if (holiday || dayEvents.some(event => event.type === "holiday")) element.classList.add("holiday");
       if (dayEvents.some(event => event.type === "birthday")) element.classList.add("birthday");
-      if (dayEvents.some(event => !["birthday", "no-kindergarten"].includes(event.type))) element.classList.add("event");
+      if (dayEvents.some(event => !["birthday", "holiday", "no-kindergarten"].includes(event.type))) element.classList.add("event");
 
       const descriptions = [
+        holiday?.title,
         closure?.title,
         ...dayEvents.map(event => event.title)
       ].filter(Boolean);
@@ -215,14 +237,25 @@
     const monthStart = isoDate(new Date(year, month, 1));
     const monthEnd = isoDate(new Date(year, month + 1, 0));
     const monthlyItems = [
+      ...ISRAEL_HOLIDAYS
+        .filter(holiday => holiday.end >= monthStart && holiday.start <= monthEnd)
+        .map(holiday => ({
+          id: `holiday-${holiday.start}`,
+          date: holiday.start < monthStart ? monthStart : holiday.start,
+          end: holiday.end,
+          title: holiday.title,
+          details: formatRange(holiday.start, holiday.end),
+          type: "holiday",
+          official: true
+        })),
       ...EDUCATION_CLOSURES
         .filter(closure => closure.end >= monthStart && closure.start <= monthEnd)
         .map(closure => ({
           id: `closure-${closure.start}`,
           date: closure.start < monthStart ? monthStart : closure.start,
           end: closure.end,
-          title: closure.title,
-          details: `${formatRange(closure.start, closure.end)} · אין גן`,
+          title: "אין גן",
+          details: `${closure.title} · ${formatRange(closure.start, closure.end)}`,
           type: "no-kindergarten",
           official: true
         })),
@@ -242,7 +275,7 @@
     monthlyItems.forEach(event => {
       const date = new Date(`${event.date}T12:00:00`);
       const card = document.createElement("article");
-      card.className = `event-card ${event.type === "no-kindergarten" ? "no-kindergarten" : ""}`;
+      card.className = `event-card ${escapeHtml(event.type || "event")}`;
       card.innerHTML = `
         <div class="date-tile"><strong>${String(date.getDate()).padStart(2, "0")}</strong><span>${escapeHtml(new Intl.DateTimeFormat("he-IL", { month: "short" }).format(date))}</span></div>
         <div><strong>${escapeHtml(event.title)}</strong><span>${escapeHtml(event.details || "")}</span></div>`;
@@ -294,7 +327,11 @@
     data.community.forEach(item => {
       const config = communityConfig[item.item_type];
       const title = item.item_type === "give" ? item.item_name : item.child_name;
-      const meta = item.item_type === "park" ? item.garden_name : "";
+      const meta = item.item_type === "park"
+        ? item.garden_name
+        : item.item_type === "pickup"
+          ? item.item_name
+          : "";
       const card = document.createElement("article");
       card.className = "community-card";
       card.innerHTML = `
@@ -431,6 +468,8 @@
     const typeInput = document.getElementById("communityType");
     const valueInput = document.getElementById("communityValue");
     const valueLabel = document.getElementById("communityInputLabel");
+    const dayInput = document.getElementById("communityDayValue");
+    const dayLabel = document.getElementById("communityDayLabel");
     const extraInput = document.getElementById("communityExtraValue");
     const extraLabel = document.getElementById("communityExtraLabel");
 
@@ -448,6 +487,10 @@
         valueInput.value = context.membership.child_name;
         valueInput.readOnly = true;
       }
+      dayLabel.hidden = type !== "pickup";
+      dayInput.required = type === "pickup";
+      if (type === "pickup") dayInput.value = "יום ראשון";
+
       extraLabel.hidden = type !== "park";
       extraInput.required = type === "park";
       extraInput.value = "";
@@ -463,7 +506,11 @@
         await window.GanState.addCommunityItem(context, {
           type,
           childName: type === "give" ? "" : context.membership.child_name,
-          itemName: type === "give" ? valueInput.value.trim() : "",
+          itemName: type === "give"
+            ? valueInput.value.trim()
+            : type === "pickup"
+              ? dayInput.value
+              : "",
           gardenName: type === "park" ? extraInput.value.trim() : ""
         });
         modal.hidden = true;
@@ -513,7 +560,7 @@
   });
 
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20260728-2").catch(console.warn));
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20260728-3").catch(console.warn));
   }
 
   initialize();

@@ -1,7 +1,7 @@
-const CACHE = "gan-mazor-v10-20260728";
+const CACHE = "gan-mazor-v11-20260728";
 const STATIC_ASSETS = [
   "./styles.css", "./admin.css", "./manifest.json",
-  "./assets/icon.svg", "./assets/staff-yael.svg", "./assets/staff-michal.svg",
+  "./assets/icon.svg", "./assets/icon-192.png", "./assets/icon-512.png", "./assets/staff-yael.svg", "./assets/staff-michal.svg",
   "./assets/staff-liron.svg", "./assets/staff-shira.svg", "./assets/kid-noam.svg", "./assets/kid-aya.svg",
   "./assets/album-1.svg", "./assets/album-2.svg", "./assets/album-3.svg", "./assets/album-4.svg",
   "./assets/album-5.svg", "./assets/album-6.svg", "./assets/album-7.svg", "./assets/album-8.svg"

@@ -1115,14 +1115,15 @@ input:focus, select:focus { outline: 3px solid rgba(57,90,135,.15); border-color
   white-space: normal;
 }
 
-.nav-sprout-icon {
-  width: 21px;
-  height: 21px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.nav-gate-icon {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.nav-gate-icon .nav-gate-cutout {
+  fill: var(--background);
+  stroke: none;
 }
 
 @media (max-width: 360px) {

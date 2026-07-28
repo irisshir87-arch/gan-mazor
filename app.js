@@ -444,21 +444,26 @@
         <div class="community-card-actions">
           ${isOwner
             ? `<span class="community-response-count" title="מספר תגובות">👍 ${itemResponses.length}</span>
-               <button class="community-close-btn" type="button" aria-label="סגירת האירוע" title="סגירת האירוע">✓</button>`
+               ${item.item_type !== "park"
+                 ? `<button class="community-close-btn" type="button" aria-label="סגירת האירוע" title="סגירת האירוע">✓</button>`
+                 : ""}`
             : `<button class="community-thumb-btn ${ownResponse ? "active" : ""}" type="button" aria-label="${ownResponse ? "התגובה נשלחה" : "אני מעוניין או יכול לעזור"}" title="${ownResponse ? "התגובה נשלחה" : "שליחת תגובה"}">👍</button>`}
         </div>`;
 
       if (isOwner) {
-        card.querySelector(".community-close-btn").addEventListener("click", async () => {
-          try {
-            await window.GanState.closeCommunityItem(context, item.id);
-            data.community = data.community.filter(entry => entry.id !== item.id);
-            renderCommunity();
-            showToast("האירוע נסגר והוסר מהקהילה.");
-          } catch (error) {
-            showToast(error.message || "לא ניתן לסגור את האירוע.");
-          }
-        });
+        const closeButton = card.querySelector(".community-close-btn");
+        if (closeButton) {
+          closeButton.addEventListener("click", async () => {
+            try {
+              await window.GanState.closeCommunityItem(context, item.id);
+              data.community = data.community.filter(entry => entry.id !== item.id);
+              renderCommunity();
+              showToast("האירוע נסגר והוסר מהקהילה.");
+            } catch (error) {
+              showToast(error.message || "לא ניתן לסגור את האירוע.");
+            }
+          });
+        }
       } else {
         const thumbButton = card.querySelector(".community-thumb-btn");
         thumbButton.addEventListener("click", async () => {

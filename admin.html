@@ -12,7 +12,7 @@
   <div class="admin-shell">
     <header class="admin-topbar">
       <div><p class="eyebrow">אזור ניהול</p><h1>גן מזור</h1></div>
-      <div class="admin-actions"><span class="status-badge">מצב דמו</span><a class="secondary-link" href="index.html">צפייה כאילו אני הורה</a></div>
+      <div class="admin-actions"><span class="status-badge">מתחבר…</span><a class="secondary-link" href="index.html">צפייה כאילו אני הורה</a></div>
     </header>
 
     <main class="admin-main">
@@ -62,7 +62,7 @@
 
       <section class="admin-panel" data-admin-panel="albums">
         <div class="admin-heading"><div><p class="eyebrow">לצוות הגן</p><h2>אלבומים</h2></div><span class="admin-note">האלבום נמחק אחרי שבוע</span></div>
-        <form id="albumForm" class="admin-card compact-form"><h3>פתיחת אלבום לתאריך</h3><label>תאריך האלבום<input name="albumDate" type="date" required></label><label>בחירת תמונות<input name="albumFiles" type="file" accept="image/*" multiple></label><p class="helper-text">במצב דמו נשמרת תצוגה מקומית. בחיבור האמיתי התמונות יישמרו באחסון פרטי.</p><button class="primary-button" type="submit">יצירת אלבום</button></form>
+        <form id="albumForm" class="admin-card compact-form"><h3>פתיחת אלבום לתאריך</h3><label>תאריך האלבום<input name="albumDate" type="date" required></label><label>בחירת תמונות<input name="albumFiles" type="file" accept="image/*" multiple></label><p class="helper-text">התמונות נשמרות ב־Storage פרטי ונמחקות אחרי שבוע.</p><button class="primary-button" type="submit">יצירת אלבום</button></form>
         <section class="admin-card"><h3>אלבומים קיימים</h3><div id="adminAlbums" class="admin-list"></div></section>
       </section>
 
@@ -76,6 +76,9 @@
     </main>
     <div id="adminToast" class="toast" role="status" aria-live="polite"></div>
   </div>
-  <script src="config.js?v=20260726-1"></script><script src="state.js?v=20260726-1"></script><script src="admin.js?v=20260726-1"></script>
+  <script src="config.js?v=20260728-1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="state.js?v=20260728-1"></script>
+  <script src="admin.js?v=20260728-1"></script>
 </body>
 </html>

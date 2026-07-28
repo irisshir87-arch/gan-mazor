@@ -6,170 +6,23 @@
   <title>כניסה לגן מזור</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    body {
-      display: grid;
-      place-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-    .login-card {
-      width: min(440px, 100%);
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 26px;
-      padding: 28px;
-      box-shadow: var(--shadow);
-    }
-    .login-card h1 {
-      margin: 0 0 8px;
-      font-size: 32px;
-    }
-    .login-card p {
-      color: var(--muted);
-      line-height: 1.6;
-    }
-    .demo-link {
-      display: block;
-      text-align: center;
-      margin-top: 14px;
-      color: var(--navy);
-      font-weight: 800;
-    }
-    .message {
-      margin-top: 14px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .message.success {
-      color: #2f6b4f;
-      font-weight: 700;
-    }
-    .message.error {
-      color: #9a3737;
-      font-weight: 700;
-    }
+    body{display:grid;place-items:center;min-height:100vh;padding:20px}.login-card{width:min(440px,100%);background:#fff;border:1px solid var(--border);border-radius:26px;padding:28px;box-shadow:var(--shadow)}.login-card h1{margin:0 0 8px;font-size:32px}.login-card p{color:var(--muted);line-height:1.6}.message{margin-top:14px;font-size:13px;color:var(--muted)}.message.success{color:#2f6b4f;font-weight:700}.message.error{color:#9a3737;font-weight:700}
   </style>
 </head>
 <body>
   <main class="login-card">
-    <p class="eyebrow">כניסה מאובטחת</p>
-    <h1>גן מזור</h1>
+    <p class="eyebrow">כניסה מאובטחת</p><h1>גן מזור</h1>
     <p>נשלח אלייך קישור כניסה חד־פעמי למייל. אין צורך לזכור סיסמה.</p>
-
-    <form id="loginForm">
-      <label>
-        כתובת מייל
-        <input id="email" type="email" autocomplete="email" required placeholder="name@example.com">
-      </label>
-      <button class="primary-button" type="submit" disabled>שליחת קישור כניסה</button>
-    </form>
-
-    <a class="demo-link" href="index.html">כניסה למצב הדמו</a>
-    <div id="message" class="message">טוענת את הגדרות החיבור…</div>
+    <form id="loginForm"><label>כתובת מייל<input id="email" type="email" autocomplete="email" required placeholder="name@example.com"></label><button class="primary-button" type="submit" disabled>שליחת קישור כניסה</button></form>
+    <div id="message" class="message">טוענת את החיבור…</div>
   </main>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const form = document.getElementById("loginForm");
-    const message = document.getElementById("message");
-    const button = form.querySelector('button[type="submit"]');
-
-    function setMessage(text, type = "") {
-      message.textContent = text;
-      message.className = `message ${type}`.trim();
-    }
-
-    function getConfig() {
-      return window.GAN_MAZOR_CONFIG || {};
-    }
-
-    function connectionIsReady() {
-      const config = getConfig();
-      return Boolean(
-        config.SUPABASE_URL &&
-        config.SUPABASE_ANON_KEY &&
-        config.SUPABASE_URL.endsWith(".supabase.co") &&
-        config.SUPABASE_ANON_KEY.startsWith("sb_publishable_")
-      );
-    }
-
-    function loadFreshConfig() {
-      return new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = `config.js?v=${Date.now()}`;
-        script.async = true;
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-      });
-    }
-
-    async function initializeLogin() {
-      try {
-        await loadFreshConfig();
-
-        if (!connectionIsReady()) {
-          throw new Error("קובץ החיבור נטען, אך חסרים בו פרטי Supabase.");
-        }
-
-        button.disabled = false;
-        setMessage("החיבור מוכן. אפשר לשלוח קישור כניסה.", "success");
-      } catch (error) {
-        console.error(error);
-        button.disabled = true;
-        setMessage(
-          "הגדרות החיבור לא נטענו. רענני את העמוד בעוד דקה.",
-          "error"
-        );
-      }
-    }
-
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-
-      if (!connectionIsReady()) {
-        setMessage("החיבור עדיין לא מוכן. רענני את העמוד.", "error");
-        return;
-      }
-
-      button.disabled = true;
-      button.textContent = "שולחת…";
-      setMessage("");
-
-      try {
-        const config = getConfig();
-        const client = window.supabase.createClient(
-          config.SUPABASE_URL,
-          config.SUPABASE_ANON_KEY
-        );
-
-        const redirectUrl = new URL("index.html", window.location.href);
-        redirectUrl.search = "";
-        redirectUrl.hash = "";
-
-        const { error } = await client.auth.signInWithOtp({
-          email: document.getElementById("email").value.trim(),
-          options: {
-            emailRedirectTo: redirectUrl.toString()
-          }
-        });
-
-        if (error) throw error;
-
-        setMessage(
-          "הקישור נשלח. בדקי את תיבת המייל וגם את תיקיית הספאם.",
-          "success"
-        );
-      } catch (error) {
-        console.error(error);
-        setMessage(error?.message || "לא ניתן לשלוח כרגע.", "error");
-      } finally {
-        button.disabled = false;
-        button.textContent = "שליחת קישור כניסה";
-      }
-    });
-
-    initializeLogin();
+    const form=document.getElementById('loginForm'),message=document.getElementById('message'),button=form.querySelector('button');
+    const setMessage=(text,type='')=>{message.textContent=text;message.className=`message ${type}`.trim()};
+    const loadConfig=()=>new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=`config.js?v=${Date.now()}`;script.onload=resolve;script.onerror=reject;document.head.appendChild(script)});
+    async function init(){try{await loadConfig();const c=window.GAN_MAZOR_CONFIG||{};if(!c.SUPABASE_URL||!c.SUPABASE_ANON_KEY)throw new Error('חסרים פרטי חיבור');const client=window.supabase.createClient(c.SUPABASE_URL,c.SUPABASE_ANON_KEY,{auth:{persistSession:true,detectSessionInUrl:true,storageKey:'gan-mazor-auth'}});const {data}=await client.auth.getSession();if(data.session){location.replace(new URLSearchParams(location.search).get('next')||'index.html');return}button.disabled=false;setMessage('החיבור מוכן. אפשר לשלוח קישור כניסה.','success')}catch(error){console.error(error);setMessage('הגדרות החיבור לא נטענו. רענני את העמוד.','error')}}
+    form.addEventListener('submit',async event=>{event.preventDefault();button.disabled=true;button.textContent='שולחת…';try{const c=window.GAN_MAZOR_CONFIG;const client=window.supabase.createClient(c.SUPABASE_URL,c.SUPABASE_ANON_KEY,{auth:{persistSession:true,detectSessionInUrl:true,storageKey:'gan-mazor-auth'}});const next=new URLSearchParams(location.search).get('next')||'index.html';const redirect=new URL(next,location.href);redirect.search='';redirect.hash='';const {error}=await client.auth.signInWithOtp({email:document.getElementById('email').value.trim(),options:{emailRedirectTo:redirect.toString()}});if(error)throw error;setMessage('הקישור נשלח. בדקי גם בתיקיית הספאם.','success')}catch(error){setMessage(error.message||'לא ניתן לשלוח כרגע.','error')}finally{button.disabled=false;button.textContent='שליחת קישור כניסה'}});init();
   </script>
 </body>
 </html>

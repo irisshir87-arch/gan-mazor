@@ -1,220 +1,433 @@
-const screens = [...document.querySelectorAll(".screen")];
-const navItems = [...document.querySelectorAll(".nav-item")];
-const toast = document.getElementById("toast");
+(function () {
+  "use strict";
 
-function hydrateSharedState() {
-  if (!window.GanState) return;
-  const state = window.GanState.load();
-  const home = state.home;
-  const people = [...document.querySelectorAll(".staff-card .person")];
-  [...home.morning, ...home.afternoon].forEach((person, index) => {
-    const node = people[index];
-    if (!node) return;
-    node.querySelector("strong").textContent = person.name;
-    node.querySelector("span").textContent = person.role;
-    node.querySelector("img").src = person.image;
-  });
-  const updated = document.querySelector("#homeScreen .status-badge");
-  if (updated) updated.textContent = `עודכן ${home.updatedAt}`;
-  const meeting = document.querySelector("#meetingToggle small");
-  if (meeting) meeting.textContent = home.meetingTitle;
-  if (meetingDetails) meetingDetails.textContent = home.meetingDetails;
-  const activity = document.querySelector(".simple-row small");
-  if (activity) activity.textContent = home.activityTitle;
-  const reminder = document.querySelector(".reminder-card h3");
-  if (reminder) reminder.textContent = home.reminder;
-  const kids = [...document.querySelectorAll(".shabbat-kids .kid")];
-  home.shabbat.forEach((kid, index) => {
-    if (!kids[index]) return;
-    kids[index].querySelector("strong").textContent = kid.name;
-    kids[index].querySelector("img").src = kid.image;
-  });
-}
+  const screens = [...document.querySelectorAll(".screen")];
+  const navItems = [...document.querySelectorAll(".nav-item")];
+  const toast = document.getElementById("toast");
+  let context;
+  let data;
 
-function showToast(message) {
-  toast.textContent = message;
-  toast.classList.add("show");
-  clearTimeout(window.toastTimer);
-  window.toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
-}
+  const escapeHtml = value => String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
-function navigate(target) {
-  screens.forEach(screen => screen.classList.toggle("active", screen.dataset.screen === target));
-  navItems.forEach(item => item.classList.toggle("active", item.dataset.target === target));
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  document.getElementById("app").focus({ preventScroll: true });
-  history.replaceState(null, "", `#${target}`);
-}
-
-navItems.forEach(item => item.addEventListener("click", () => navigate(item.dataset.target)));
-document.querySelectorAll("[data-go]").forEach(btn => btn.addEventListener("click", () => navigate(btn.dataset.go)));
-
-const meetingToggle = document.getElementById("meetingToggle");
-const meetingDetails = document.getElementById("meetingDetails");
-meetingToggle.addEventListener("click", () => {
-  const expanded = meetingToggle.getAttribute("aria-expanded") === "true";
-  meetingToggle.setAttribute("aria-expanded", String(!expanded));
-  meetingDetails.hidden = expanded;
-});
-
-const calendarGrid = document.getElementById("calendarGrid");
-const days = [
-  {n: 28, muted: true}, {n: 29, muted: true}, {n: 30, muted: true}, {n: 1}, {n: 2}, {n: 3}, {n: 4},
-  {n: 5}, {n: 6}, {n: 7}, {n: 8}, {n: 9}, {n: 10}, {n: 11},
-  {n: 12}, {n: 13}, {n: 14, birthday: true}, {n: 15}, {n: 16}, {n: 17}, {n: 18},
-  {n: 19}, {n: 20}, {n: 21}, {n: 22}, {n: 23}, {n: 24, today: true}, {n: 25},
-  {n: 26}, {n: 27, noKindergarten: true}, {n: 28, noKindergarten: true}, {n: 29}, {n: 30, event: true}, {n: 31}, {n: 1, muted: true}
-];
-days.forEach(day => {
-  const el = document.createElement("div");
-  el.className = "calendar-day";
-  if (day.muted) el.classList.add("muted-day");
-  if (day.today) el.classList.add("today");
-  if (day.noKindergarten) el.classList.add("no-kindergarten");
-  if (day.birthday) el.classList.add("birthday");
-  if (day.event) el.classList.add("event");
-  el.textContent = day.n;
-  calendarGrid.appendChild(el);
-});
-
-document.getElementById("addReminderBtn").addEventListener("click", () => showToast("בגרסה המחוברת תיפתח הוספת תזכורת"));
-document.getElementById("showAllExpenses").addEventListener("click", () => showToast("מוצגות הוצאות הדוגמה של הוועד"));
-
-const profileModal = document.getElementById("profileModal");
-const profileChip = document.getElementById("profileChip");
-const profileForm = document.getElementById("profileForm");
-const profileLabel = document.getElementById("profileLabel");
-const parentName = document.getElementById("parentName");
-const childName = document.getElementById("childName");
-const relation = document.getElementById("relation");
-
-function loadProfile() {
-  const profile = JSON.parse(localStorage.getItem("ganMazorProfile") || "null");
-  if (!profile) {
-    profileModal.hidden = false;
-    return;
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(window.toastTimer);
+    window.toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
   }
-  profileLabel.textContent = `${profile.relation} ${profile.childName}`;
-  document.querySelector(".profile-avatar").textContent = profile.parentName.charAt(0) || "ה";
-  parentName.value = profile.parentName;
-  childName.value = profile.childName;
-  relation.value = profile.relation;
-}
 
-profileChip.addEventListener("click", () => profileModal.hidden = false);
-document.querySelectorAll("[data-close-modal]").forEach(btn => btn.addEventListener("click", () => profileModal.hidden = true));
-profileForm.addEventListener("submit", e => {
-  e.preventDefault();
-  const profile = {
-    parentName: parentName.value.trim(),
-    childName: childName.value.trim(),
-    relation: relation.value
+  function showFatal(message) {
+    document.body.innerHTML = `
+      <main style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#f6f6f3">
+        <section style="max-width:440px;background:#fff;padding:28px;border-radius:24px;border:1px solid #e3e5e8;text-align:center">
+          <h1 style="margin-top:0">גן מזור</h1>
+          <p style="line-height:1.7;color:#6e7480">${escapeHtml(message)}</p>
+          <a href="login.html" style="display:inline-block;margin-top:12px;color:#17213d;font-weight:700">חזרה למסך הכניסה</a>
+        </section>
+      </main>`;
+  }
+
+  function navigate(target) {
+    screens.forEach(screen => screen.classList.toggle("active", screen.dataset.screen === target));
+    navItems.forEach(item => item.classList.toggle("active", item.dataset.target === target));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    history.replaceState(null, "", `#${target}`);
+  }
+
+  navItems.forEach(item => item.addEventListener("click", () => navigate(item.dataset.target)));
+  document.querySelectorAll("[data-go]").forEach(button => button.addEventListener("click", () => navigate(button.dataset.go)));
+
+  const meetingToggle = document.getElementById("meetingToggle");
+  const meetingDetails = document.getElementById("meetingDetails");
+  meetingToggle.addEventListener("click", () => {
+    const expanded = meetingToggle.getAttribute("aria-expanded") === "true";
+    meetingToggle.setAttribute("aria-expanded", String(!expanded));
+    meetingDetails.hidden = expanded;
+  });
+
+  function formatDate(date, options = { day: "2-digit", month: "long", year: "numeric" }) {
+    return new Intl.DateTimeFormat("he-IL", options).format(new Date(`${date}T12:00:00`));
+  }
+
+  function renderProfile() {
+    const { membership } = context;
+    document.getElementById("profileLabel").textContent = `${membership.relation_label} ${membership.child_name}`;
+    document.querySelector(".profile-avatar").textContent = (membership.parent_name || "ה").charAt(0);
+
+    const profileModal = document.getElementById("profileModal");
+    const form = document.getElementById("profileForm");
+    document.getElementById("parentName").value = membership.parent_name;
+    document.getElementById("childName").value = membership.child_name;
+    document.getElementById("relation").value = membership.relation_label;
+    [...form.querySelectorAll("input,select")].forEach(field => field.disabled = true);
+    const submit = form.querySelector('button[type="submit"]');
+    submit.type = "button";
+    submit.textContent = "התנתקות";
+    submit.addEventListener("click", () => window.GanState.signOut());
+
+    document.getElementById("profileChip").addEventListener("click", () => profileModal.hidden = false);
+    document.querySelectorAll("[data-close-modal]").forEach(button => button.addEventListener("click", () => profileModal.hidden = true));
+  }
+
+  function renderHome() {
+    const home = data.home;
+    const people = [...document.querySelectorAll(".staff-card .person")];
+    [...home.morning, ...home.afternoon].forEach((person, index) => {
+      const node = people[index];
+      if (!node) return;
+      node.querySelector("strong").textContent = person.name || "";
+      node.querySelector("span").textContent = person.role || "";
+      node.querySelector("img").src = person.image || people[index].querySelector("img").src;
+    });
+
+    document.querySelector("#homeScreen .status-badge").textContent = home.updatedAt ? `עודכן ${home.updatedAt}` : "טרם עודכן";
+    document.querySelector("#meetingToggle small").textContent = home.meetingTitle;
+    meetingDetails.textContent = home.meetingDetails || "לא פורסמה הרחבה נוספת.";
+    document.querySelector(".simple-row small").textContent = home.activityTitle;
+    document.querySelector(".reminder-card h3").textContent = home.reminder;
+
+    const kids = [...document.querySelectorAll(".shabbat-kids .kid")];
+    home.shabbat.forEach((kid, index) => {
+      if (!kids[index]) return;
+      kids[index].querySelector("strong").textContent = kid.name || "טרם נבחר";
+      if (kid.image) kids[index].querySelector("img").src = kid.image;
+    });
+
+    const album = data.albums[0];
+    const albumCard = document.querySelector(".daily-album-card");
+    albumCard.querySelector("h3").textContent = album ? `${album.photos.length} תמונות מהאלבום האחרון` : "אין אלבום חדש";
+    const preview = albumCard.querySelector(".album-preview");
+    preview.innerHTML = "";
+    (album?.photos || []).slice(0, 3).forEach(photo => {
+      const image = document.createElement("img");
+      image.src = photo.url;
+      image.alt = "תמונה מהאלבום היומי";
+      preview.appendChild(image);
+    });
+    if (!album) preview.hidden = true;
+  }
+
+  function monthKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  function renderCalendar() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const monthLabel = new Intl.DateTimeFormat("he-IL", { month: "long", year: "numeric" }).format(now);
+    document.querySelector("#calendarScreen .eyebrow").textContent = monthLabel;
+
+    const grid = document.getElementById("calendarGrid");
+    grid.innerHTML = "";
+    const first = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const previousDays = new Date(year, month, 0).getDate();
+    const cells = Math.ceil((first.getDay() + daysInMonth) / 7) * 7;
+    const eventsByDate = new Map(data.events.map(event => [event.date, event]));
+
+    for (let cell = 0; cell < cells; cell += 1) {
+      const dayOffset = cell - first.getDay() + 1;
+      let displayDay;
+      let cellDate;
+      let muted = false;
+      if (dayOffset < 1) {
+        displayDay = previousDays + dayOffset;
+        cellDate = new Date(year, month - 1, displayDay);
+        muted = true;
+      } else if (dayOffset > daysInMonth) {
+        displayDay = dayOffset - daysInMonth;
+        cellDate = new Date(year, month + 1, displayDay);
+        muted = true;
+      } else {
+        displayDay = dayOffset;
+        cellDate = new Date(year, month, displayDay);
+      }
+
+      const iso = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, "0")}-${String(cellDate.getDate()).padStart(2, "0")}`;
+      const event = eventsByDate.get(iso);
+      const element = document.createElement("div");
+      element.className = "calendar-day";
+      if (muted) element.classList.add("muted-day");
+      if (iso === window.GanState.todayIso()) element.classList.add("today");
+      if (event?.type === "no-kindergarten") element.classList.add("no-kindergarten");
+      if (event?.type === "birthday") element.classList.add("birthday");
+      if (event && !["birthday", "no-kindergarten"].includes(event.type)) element.classList.add("event");
+      element.textContent = displayDay;
+      grid.appendChild(element);
+    }
+
+    const eventList = document.querySelector("#calendarScreen .event-list");
+    eventList.innerHTML = "";
+    const upcoming = data.events.filter(event => event.date >= window.GanState.todayIso()).slice(0, 12);
+    if (!upcoming.length) {
+      eventList.innerHTML = '<article class="event-card"><div><strong>אין אירועים קרובים</strong><span>אירועים חדשים יופיעו כאן</span></div></article>';
+      return;
+    }
+    upcoming.forEach(event => {
+      const date = new Date(`${event.date}T12:00:00`);
+      const card = document.createElement("article");
+      card.className = `event-card ${event.type === "no-kindergarten" ? "no-kindergarten" : ""}`;
+      card.innerHTML = `
+        <div class="date-tile"><strong>${String(date.getDate()).padStart(2, "0")}</strong><span>${escapeHtml(new Intl.DateTimeFormat("he-IL", { month: "short" }).format(date))}</span></div>
+        <div><strong>${escapeHtml(event.title)}</strong><span>${escapeHtml(event.details)}</span></div>`;
+      eventList.appendChild(card);
+    });
+  }
+
+  function renderAlbums() {
+    const list = document.querySelector(".albums-list");
+    list.innerHTML = "";
+    if (!data.albums.length) {
+      list.innerHTML = '<article class="album-date-card"><strong>אין אלבומים פעילים</strong><p class="muted">אלבומים חדשים יופיעו כאן ויוסרו אחרי שבוע.</p></article>';
+      return;
+    }
+    data.albums.forEach((album, index) => {
+      const card = document.createElement("article");
+      card.className = "album-date-card";
+      card.innerHTML = `
+        <div class="album-date-heading">
+          <div><strong>${index === 0 ? "האלבום האחרון" : "אלבום"}</strong><span>${escapeHtml(formatDate(album.date))}</span></div>
+          <span>${album.photos.length} תמונות</span>
+        </div>
+        <div class="photo-grid"></div>`;
+      const grid = card.querySelector(".photo-grid");
+      album.photos.forEach(photo => {
+        const image = document.createElement("img");
+        image.src = photo.url;
+        image.alt = `תמונה מאלבום ${formatDate(album.date)}`;
+        image.loading = "lazy";
+        grid.appendChild(image);
+      });
+      list.appendChild(card);
+    });
+  }
+
+  const communityConfig = {
+    pickup: { label: "עזרה באיסוף", icon: "🚗", action: "אני יכול/ה לעזור" },
+    give: { label: "למסירה", icon: "🎁", action: "מתעניין/ת" },
+    park: { label: "בילוי בגינה", icon: "🌳", action: "מצטרפים" }
   };
-  localStorage.setItem("ganMazorProfile", JSON.stringify(profile));
-  profileModal.hidden = true;
-  loadProfile();
-hydrateSharedState();
-window.addEventListener("gan-state-change", hydrateSharedState);
-  showToast("הפרופיל נשמר");
-});
 
-const communityModal = document.getElementById("communityModal");
-const communityForm = document.getElementById("communityForm");
-const communityType = document.getElementById("communityType");
-const communityValue = document.getElementById("communityValue");
-const communityInputLabel = document.getElementById("communityInputLabel");
-const communityExtraLabel = document.getElementById("communityExtraLabel");
-const communityExtraValue = document.getElementById("communityExtraValue");
-const communityFormTitle = document.getElementById("communityFormTitle");
-const communityFeed = document.getElementById("communityFeed");
-
-const formConfig = {
-  pickup: { title: "עזרה באיסוף", label: "שם הילד", placeholder: "לדוגמה: נועם", icon: "🚗", action: "אני יכול/ה לעזור" },
-  give: { title: "למסירה", label: "מה מוסרים?", placeholder: "לדוגמה: מיטת תינוק", icon: "🎁", action: "מתעניין/ת" },
-  park: { title: "בילוי בגינה", label: "שם הילד", placeholder: "לדוגמה: איה", extraLabel: "שם הגינה", extraPlaceholder: "לדוגמה: גינת השקד", icon: "🌳", action: "מצטרפים" }
-};
-
-document.querySelectorAll("[data-community-form]").forEach(btn => btn.addEventListener("click", () => {
-  const type = btn.dataset.communityForm;
-  const config = formConfig[type];
-  communityType.value = type;
-  communityFormTitle.textContent = config.title;
-  communityInputLabel.firstChild.textContent = config.label;
-  communityValue.placeholder = config.placeholder;
-  communityValue.value = "";
-  if (config.extraLabel) {
-    communityExtraLabel.hidden = false;
-    communityExtraLabel.firstChild.textContent = config.extraLabel;
-    communityExtraValue.placeholder = config.extraPlaceholder || "";
-    communityExtraValue.value = "";
-    communityExtraValue.required = true;
-  } else {
-    communityExtraLabel.hidden = true;
-    communityExtraValue.value = "";
-    communityExtraValue.required = false;
+  function renderCommunity() {
+    const feed = document.getElementById("communityFeed");
+    feed.innerHTML = "";
+    if (!data.community.length) {
+      feed.innerHTML = '<article class="community-card"><div class="community-card-content"><h3>אין אירועים פתוחים כרגע</h3></div></article>';
+      return;
+    }
+    data.community.forEach(item => {
+      const config = communityConfig[item.item_type];
+      const title = item.item_type === "give" ? item.item_name : item.child_name;
+      const meta = item.item_type === "park" ? item.garden_name : item.item_type === "pickup" ? "בקשה פתוחה להיום" : "פריט למסירה";
+      const card = document.createElement("article");
+      card.className = "community-card";
+      card.innerHTML = `
+        <div class="community-card-icon">${config.icon}</div>
+        <div class="community-card-content">
+          <span class="tag">${config.label}</span>
+          <h3>${escapeHtml(title)}</h3>
+          <p class="community-meta">${escapeHtml(meta)}</p>
+          <button class="secondary-button respond-btn">${config.action}</button>
+        </div>`;
+      card.querySelector("button").addEventListener("click", async () => {
+        try {
+          await window.GanState.respondToCommunity(context, item.id);
+          showToast("המענה נשמר. מפרסם/ת הבקשה יוכל/תוכל לראות אותו.");
+        } catch (error) {
+          showToast(error.message || "לא ניתן לשמור את המענה.");
+        }
+      });
+      feed.appendChild(card);
+    });
   }
-  communityModal.hidden = false;
-  setTimeout(() => communityValue.focus(), 80);
-}));
 
-document.querySelectorAll("[data-close-community]").forEach(btn => btn.addEventListener("click", () => communityModal.hidden = true));
+  function renderCommittee() {
+    const pollCard = document.querySelector(".poll-card");
+    const treatsCard = document.querySelector(".treats-card");
+    const poll = data.initiatives.find(item => item.initiative_type === "poll");
+    const treats = data.initiatives.find(item => item.initiative_type === "treats");
 
-communityForm.addEventListener("submit", e => {
-  e.preventDefault();
-  const type = communityType.value;
-  const config = formConfig[type];
-  const value = communityValue.value.trim();
-  const extra = communityExtraValue ? communityExtraValue.value.trim() : "";
-  const title = type === "pickup" ? value :
-                type === "park" ? value : value;
-  const meta = type === "pickup" ? "בקשה פתוחה להיום" :
-               type === "park" ? extra : "פריט אחד פשוט וברור";
+    if (!poll) {
+      pollCard.hidden = true;
+    } else {
+      pollCard.hidden = false;
+      pollCard.querySelector("h3").textContent = poll.title;
+      const options = Array.isArray(poll.payload?.options) ? poll.payload.options : [];
+      const votes = data.responses.filter(response => response.initiative_id === poll.id && response.response_key === "vote");
+      pollCard.querySelector(".participants").textContent = `${new Set(votes.map(vote => vote.user_id)).size} הצביעו`;
+      [...pollCard.querySelectorAll(".poll-option")].forEach((label, index) => {
+        const option = options[index];
+        if (!option) {
+          label.hidden = true;
+          return;
+        }
+        label.hidden = false;
+        const value = typeof option === "string" ? option : option.value || option.label;
+        label.querySelector("input").value = value;
+        label.querySelector("span").textContent = typeof option === "string" ? option : option.label;
+        const count = votes.filter(vote => vote.response_value === value).length;
+        label.querySelector("small").textContent = votes.length ? `${Math.round(count / votes.length * 100)}%` : "0%";
+      });
+      const ownVote = votes.find(vote => vote.user_id === context.session.user.id);
+      if (ownVote) {
+        const selected = pollCard.querySelector(`input[value="${CSS.escape(ownVote.response_value)}"]`);
+        if (selected) selected.checked = true;
+      }
+      document.getElementById("voteBtn").onclick = async () => {
+        const selected = pollCard.querySelector('input[name="summerPoll"]:checked');
+        if (!selected) return showToast("בחרו אפשרות לפני השליחה.");
+        try {
+          await window.GanState.saveCommitteeResponse(context, poll.id, "vote", selected.value);
+          showToast("ההצבעה נשמרה.");
+          data = await window.GanState.loadSharedData(context);
+          renderCommittee();
+        } catch (error) {
+          showToast(error.message || "לא ניתן לשמור הצבעה.");
+        }
+      };
+    }
 
-  const card = document.createElement("article");
-  card.className = "community-card";
-  card.innerHTML = `
-    <div class="community-card-icon">${config.icon}</div>
-    <div class="community-card-content">
-      <span class="tag">${config.title}</span>
-      <h3>${title}</h3>
-      <p class="community-meta">${meta}</p>
-      <button class="secondary-button respond-btn">${config.action}</button>
-    </div>`;
-  communityFeed.prepend(card);
-  card.querySelector(".respond-btn").addEventListener("click", () => showToast("המענה נשלח באופן פרטי למפרסם/ת"));
-  communityModal.hidden = true;
-  showToast("הפרסום נוסף לקהילה");
-});
+    if (!treats) {
+      treatsCard.hidden = true;
+    } else {
+      treatsCard.hidden = false;
+      treatsCard.querySelector("h3").textContent = treats.title;
+      const items = Array.isArray(treats.payload?.items) ? treats.payload.items : [];
+      const claims = data.responses.filter(response => response.initiative_id === treats.id && response.response_key.startsWith("treat:"));
+      treatsCard.querySelector(".participants").textContent = `${claims.length} מתוך ${items.length}`;
+      const list = document.getElementById("treatList");
+      list.innerHTML = "";
+      items.forEach((item, index) => {
+        const label = typeof item === "string" ? item : item.label;
+        const key = typeof item === "string" ? String(index) : String(item.id ?? index);
+        const claim = claims.find(response => response.response_key === `treat:${key}`);
+        const button = document.createElement("button");
+        button.className = `treat-item ${claim ? "taken" : ""}`;
+        button.disabled = Boolean(claim);
+        button.innerHTML = `<span>${escapeHtml(label)}</span><small>${escapeHtml(claim?.response_value || "פנוי")}</small>`;
+        button.addEventListener("click", async () => {
+          try {
+            await window.GanState.saveCommitteeResponse(context, treats.id, `treat:${key}`, context.membership.child_name);
+            showToast(`נרשמתם להביא: ${label}`);
+            data = await window.GanState.loadSharedData(context);
+            renderCommittee();
+          } catch (error) {
+            showToast(error.message || "לא ניתן להירשם.");
+          }
+        });
+        list.appendChild(button);
+      });
+    }
 
-document.querySelectorAll(".respond-btn").forEach(btn => btn.addEventListener("click", () => showToast("המענה נשלח באופן פרטי למפרסם/ת")));
+    const totalExpenses = data.expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+    const collected = Number(data.fund.collected_amount || 0);
+    document.querySelector(".fund-amount").textContent = `${new Intl.NumberFormat("he-IL").format(collected - totalExpenses)} ₪`;
+    const stats = document.querySelectorAll(".fund-stats strong");
+    stats[0].textContent = `${new Intl.NumberFormat("he-IL").format(collected)} ₪`;
+    stats[1].textContent = `${new Intl.NumberFormat("he-IL").format(totalExpenses)} ₪`;
+    const paybox = document.querySelector(".paybox-button");
+    paybox.href = data.fund.paybox_url || "#";
+    paybox.classList.toggle("disabled", !data.fund.paybox_url);
 
-document.getElementById("voteBtn").addEventListener("click", () => {
-  const selected = document.querySelector('input[name="summerPoll"]:checked');
-  if (!selected) return showToast("בחרו אפשרות לפני שליחת ההצבעה");
-  localStorage.setItem("ganMazorVote", selected.value);
-  showToast("ההצבעה נשמרה");
-});
+    const expenseCard = document.querySelector(".expenses-card");
+    expenseCard.querySelectorAll(".expense-row").forEach(row => row.remove());
+    data.expenses.slice(0, 5).forEach(expense => {
+      const row = document.createElement("div");
+      row.className = "expense-row";
+      row.innerHTML = `<span>${escapeHtml(expense.description)}</span><strong>${new Intl.NumberFormat("he-IL").format(Number(expense.amount))} ₪</strong>`;
+      expenseCard.appendChild(row);
+    });
+  }
 
-document.querySelectorAll(".treat-item:not(.taken)").forEach(btn => btn.addEventListener("click", () => {
-  const profile = JSON.parse(localStorage.getItem("ganMazorProfile") || "null");
-  const child = profile?.childName || "הילד/ה";
-  btn.classList.add("taken");
-  btn.disabled = true;
-  btn.querySelector("small").textContent = child;
-  showToast(`נרשמתם להביא: ${btn.dataset.item}`);
-}));
+  function configureCommunityForm() {
+    const modal = document.getElementById("communityModal");
+    const form = document.getElementById("communityForm");
+    const typeInput = document.getElementById("communityType");
+    const valueInput = document.getElementById("communityValue");
+    const valueLabel = document.getElementById("communityInputLabel");
+    const extraInput = document.getElementById("communityExtraValue");
+    const extraLabel = document.getElementById("communityExtraLabel");
 
-window.addEventListener("hashchange", () => {
-  const target = location.hash.replace("#", "");
-  if (screens.some(s => s.dataset.screen === target)) navigate(target);
-});
+    document.querySelectorAll("[data-community-form]").forEach(button => button.addEventListener("click", () => {
+      const type = button.dataset.communityForm;
+      typeInput.value = type;
+      document.getElementById("communityFormTitle").textContent = communityConfig[type].label;
+      if (type === "give") {
+        valueLabel.firstChild.textContent = "מה מוסרים?";
+        valueInput.value = "";
+        valueInput.readOnly = false;
+        valueInput.placeholder = "לדוגמה: מיטת תינוק";
+      } else {
+        valueLabel.firstChild.textContent = "שם הילד";
+        valueInput.value = context.membership.child_name;
+        valueInput.readOnly = true;
+      }
+      extraLabel.hidden = type !== "park";
+      extraInput.required = type === "park";
+      extraInput.value = "";
+      modal.hidden = false;
+    }));
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-}
+    document.querySelectorAll("[data-close-community]").forEach(button => button.addEventListener("click", () => modal.hidden = true));
 
-const initialTarget = location.hash.replace("#", "");
-if (screens.some(s => s.dataset.screen === initialTarget)) navigate(initialTarget);
-loadProfile();
-hydrateSharedState();
-window.addEventListener("gan-state-change", hydrateSharedState);
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const type = typeInput.value;
+      try {
+        await window.GanState.addCommunityItem(context, {
+          type,
+          childName: type === "give" ? "" : context.membership.child_name,
+          itemName: type === "give" ? valueInput.value.trim() : "",
+          gardenName: type === "park" ? extraInput.value.trim() : ""
+        });
+        modal.hidden = true;
+        form.reset();
+        showToast("האירוע פורסם בקהילה.");
+        data = await window.GanState.loadSharedData(context);
+        renderCommunity();
+      } catch (error) {
+        showToast(error.message || "לא ניתן לפרסם.");
+      }
+    });
+  }
+
+  async function initialize() {
+    try {
+      context = await window.GanState.requireContext();
+      data = await window.GanState.loadSharedData(context);
+      renderProfile();
+      renderHome();
+      renderCalendar();
+      renderAlbums();
+      renderCommunity();
+      renderCommittee();
+      configureCommunityForm();
+
+      document.getElementById("addReminderBtn").addEventListener("click", () => showToast("תזכורות מתווספות דרך צוות הגן."));
+      document.getElementById("showAllExpenses").addEventListener("click", () => showToast("כל ההוצאות המוזנות מוצגות בעמוד."));
+
+      const target = location.hash.replace("#", "");
+      if (screens.some(screen => screen.dataset.screen === target)) navigate(target);
+    } catch (error) {
+      console.error(error);
+      showFatal(error.message || "לא ניתן לטעון את האפליקציה.");
+    }
+  }
+
+  window.addEventListener("hashchange", () => {
+    const target = location.hash.replace("#", "");
+    if (screens.some(screen => screen.dataset.screen === target)) navigate(target);
+  });
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20260728-1").catch(console.warn));
+  }
+
+  initialize();
+})();

@@ -1042,3 +1042,99 @@ input:focus, select:focus { outline: 3px solid rgba(57,90,135,.15); border-color
 .treats-modal .treat-item {
   min-height: 46px;
 }
+
+
+/* V10 — צוות ללא תמונות */
+.staff-card {
+  padding: 16px 14px;
+}
+
+.staff-card .section-title-row {
+  margin-bottom: 12px;
+}
+
+.staff-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.staff-group {
+  min-width: 0;
+}
+
+.staff-group + .staff-group {
+  border-right: 1px solid var(--border);
+  padding-right: 10px;
+}
+
+.staff-group h4 {
+  margin: 0 0 8px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.staff-columns .people-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.staff-columns .person {
+  min-width: 0;
+  display: block;
+  padding: 10px 5px;
+  border-radius: 14px;
+  background: var(--background);
+  text-align: center;
+}
+
+.staff-columns .person img {
+  display: none !important;
+}
+
+.staff-columns .person div {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.staff-columns .person strong {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.staff-columns .person span {
+  margin: 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.nav-sprout-icon {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 360px) {
+  .staff-columns {
+    gap: 7px;
+  }
+
+  .staff-group + .staff-group {
+    padding-right: 7px;
+  }
+
+  .staff-columns .person {
+    padding-inline: 3px;
+  }
+}

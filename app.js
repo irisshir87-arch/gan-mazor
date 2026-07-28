@@ -139,7 +139,6 @@
       if (!node) return;
       node.querySelector("strong").textContent = person.name || "";
       node.querySelector("span").textContent = person.role || "";
-      node.querySelector("img").src = person.image || people[index].querySelector("img").src;
     });
 
     document.querySelector("#homeScreen .status-badge").textContent = home.updatedAt ? `עודכן ${home.updatedAt}` : "טרם עודכן";
@@ -739,7 +738,7 @@
   });
 
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20260728-9").catch(console.warn));
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=20260728-10").catch(console.warn));
   }
 
   initialize();

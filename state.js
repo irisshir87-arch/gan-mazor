@@ -7,12 +7,12 @@
     home: {
       updatedAt: "",
       morning: [
-        { name: "יעל", role: "גננת", image: "assets/staff-yael.svg" },
-        { name: "מיכל", role: "סייעת", image: "assets/staff-michal.svg" }
+        { name: "יעל", role: "גננת" },
+        { name: "מיכל", role: "סייעת" }
       ],
       afternoon: [
-        { name: "לירון", role: "מובילת צהרון", image: "assets/staff-liron.svg" },
-        { name: "שירה", role: "סייעת", image: "assets/staff-shira.svg" }
+        { name: "לירון", role: "מובילת צהרון" },
+        { name: "שירה", role: "סייעת" }
       ],
       meetingTitle: "טרם פורסם עדכון",
       meetingDetails: "",
@@ -221,7 +221,7 @@
     const albums = [];
     for (const album of albumsResult.data || []) albums.push(await signedAlbum(album));
 
-    const home = await resolveHomeImages(mapHome(dailyResult.data));
+    const home = mapHome(dailyResult.data);
 
     return {
       home,
@@ -507,7 +507,6 @@
     addEvent,
     deleteEvent,
     createAlbum,
-    uploadStaffImage,
     deleteAlbum,
     cleanupExpiredAlbums,
     saveFund,
